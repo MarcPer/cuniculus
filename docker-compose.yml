@@ -1,0 +1,21 @@
+version: '3.5'
+
+services:
+  rabbitmq:
+    image: 'rabbitmq:3.8.9-management'
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "15672:15672" # Management port
+      - "5672:5672"
+
+  cuniculus:
+    build:
+      context: '.'
+      dockerfile: Dockerfile
+    entrypoint: /bin/bash
+    command: "-c 'trap : TERM INT; sleep infinity & wait'"
+    volumes:
+      - "./:/cuniculus/"
+
