@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'cuniculus/worker'
+require "cuniculus/worker"
 
 class MyWorker
   include Cuniculus::Worker
@@ -12,4 +12,3 @@ class MyWorker
     sleep 1
   end
 end
-

@@ -1,21 +1,21 @@
 # frozen_string_literal: true
 
-require 'cuniculus'
-require_relative 'my_worker'
+require "cuniculus"
+require_relative "my_worker"
 
 rabbitmq_conn = {
-    host: 'rabbitmq',
-    port: 5672,
-    ssl: false,
-    vhost: '/',
-    user: 'guest',
-    pass: 'guest',
-    auth_mechanism: 'PLAIN',
+  host: "rabbitmq",
+  port: 5672,
+  ssl: false,
+  vhost: "/",
+  user: "guest",
+  pass: "guest",
+  auth_mechanism: "PLAIN"
 }
 
-Cuniculus.configure_producer do |cfg|
+Cuniculus.configure do |cfg|
   cfg.rabbitmq_opts = rabbitmq_conn
-  cfg.pool_size = 5
+  cfg.pub_thr_pool_size = 5
 end
 
-MyWorker.perform_async('x', [1, 2, 3])
+MyWorker.perform_async("x", [1, 2, 3])

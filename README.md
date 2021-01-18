@@ -1,12 +1,14 @@
 # Cuniculus
 
-Ruby job queue backed by RabbitMQ. The word cuniculus comes from the scientific name of the European rabbit (Oryctolagus cuniculus).
+Ruby job queue backed by RabbitMQ. The word _cuniculus_ comes from the scientific name of the European rabbit (Oryctolagus cuniculus).
 
 ## Getting started
 
 ```
 gem install cuniculus
 ```
+
+> The following minimal example assumes RabbitMQ is running on `localhost:5672`; see the [configuration section](#configuration) for how to change this.
 
 Create a worker class:
 ```ruby
@@ -36,12 +38,12 @@ cuniculus -r my_worker.rb
 
 ### Example
 
-To run the example from the repository, clone it locally, then
-- start the containers using [Docker Compose](https://docs.docker.com/compose/):
+There is also a more complete example in the Cuniculus repository itself. To run it, clone the repository, then
+- start the Ruby and RabbitMQ containers using [Docker Compose](https://docs.docker.com/compose/):
   ```
   docker-compose up -d
   ```
-- from within the container produce a job:
+- from within the _cuniculus_ container, produce a job:
   ```
   ruby -Ilib examples/produce.rb
   ```
@@ -52,15 +54,15 @@ To run the example from the repository, clone it locally, then
 
 ## Configuration
 
-Configuration is done through code, using `Cuniculus.configure_producer` and `Cuniculus.configure_consumer` to configure the producers and consumers, respectively:
+Configuration is done through code, using `Cuniculus.configure`. 
 
-Example consumer configuration:
+Example:
 ```ruby
 require "cuniculus"
 
 # The following Hash is passed as is to Bunny, the library that integrates with RabbitMQ.
 rabbitmq_conn = {
-    host: 'rabbitmq',
+    host: 'rabbitmq', # default is 127.0.0.1
     port: 5672,
     ssl: false,
     vhost: '/',
@@ -69,31 +71,10 @@ rabbitmq_conn = {
     auth_mechanism: 'PLAIN',
 }
 
-Cuniculus.configure_consumer do |cfg|
+Cuniculus.configure do |cfg|
   cfg.rabbitmq_opts = rabbitmq_conn
+  cfg.pub_thr_pool_size = 5         # Only affects job producers
 end
-
-```
-
-Example producer configuration:
-```ruby
-require "cuniculus"
-
-rabbitmq_conn = {
-    host: 'rabbitmq',
-    port: 5672,
-    ssl: false,
-    vhost: '/',
-    user: 'guest',
-    pass: 'guest',
-    auth_mechanism: 'PLAIN',
-}
-
-Cuniculus.configure_producer do |cfg|
-  cfg.rabbitmq_opts = rabbitmq_conn
-  cfg.pool_size = 5
-end
-
 ```
 
 ## How it works
@@ -102,11 +83,11 @@ Cuniculus code and conventions are very much inspired by another Ruby job queue 
 
 To communicate with RabbitMQ, Cuniculus uses [Bunny](https://github.com/ruby-amqp/bunny).
 
-When the producer is configured with `Cuniculus.configure_producer`, a pool of RabbitMQ channels is created for publishing messages.
+The first time an async job is produced, a thread pool is created, each thread with its own communication channel to RabbitMQ. These threads push jobs to RabbitMQ.
 
 For consuming, each queue will have a corresponding thread pool (handled by Bunny) for concurrency.
 
 ## License
 
-Cuniculus is licensed under the "BSD 2-Clause License", a permissive license equivalent to MIT license. See [LICENSE](./LICENSE) for details.
+Cuniculus is licensed under the "BSD 2-Clause License". See [LICENSE](./LICENSE) for details.
 

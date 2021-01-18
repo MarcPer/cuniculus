@@ -1,16 +1,16 @@
 # frozen_string_literal: true
 
 require "bunny"
-require "cuniculus/consuming/consumer"
+
+require "cuniculus/core"
+require "cuniculus/exceptions"
+require "cuniculus/consumer"
 
 module Cuniculus
   class Supervisor
-    attr_reader :config
     def initialize(config)
-      @config = config
-      @conn = ::Bunny.new(config.rabbitmq_opts)
-      @conn.start
-      @consumers = create_consumers
+      conn = connect(config.rabbitmq_opts)
+      @consumers = create_consumers(conn, config.queues)
       @consumer_lock = Mutex.new
       @done = false
     end
@@ -21,27 +21,35 @@ module Cuniculus
 
     def stop
       @done = true
-      @consumers.each(&:stop) 
+      @consumers.each(&:stop)
     end
 
-    def create_consumers
-      consumers = [] 
+    def connect(conn_opts)
+      conn = ::Bunny.new(conn_opts)
+      conn.start
+      conn
+    rescue e
+      raise Cuniculus.convert_exception_class(e, Cuniculus::RMQConnectionError)
+    end
+
+    def create_consumers(conn, queues)
+      consumers = []
       consumer_pool_size = 5
-      config.queues.each do |name, _qcfg|
-        ch = @conn.create_channel(nil, consumer_pool_size)
-        consumers << Consuming::Consumer.new(self, name, ch)
+      queues.each do |_name, q_cfg|
+        ch = conn.create_channel(nil, consumer_pool_size)
+        consumers << Cuniculus::Consumer.new(q_cfg, ch)
       end
       consumers
     end
 
-    def consumer_exception(consumer, ex)
+    def consumer_exception(consumer, _ex)
       @consumer_lock.synchronize do
         @consumers.delete(consumer)
         unless @done
           # Reuse channel
           ch = consumer.channel
           name = consumer.queue.name
-          c = Consuming::Consumer.new(self, name, ch)
+          c = Cuniculus::Consumer.new(self, name, ch)
           @consumers << c
           c.start
         end
@@ -49,4 +57,3 @@ module Cuniculus
     end
   end
 end
-

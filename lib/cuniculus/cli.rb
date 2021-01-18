@@ -3,10 +3,10 @@
 $stdout.sync = true
 
 require "optparse"
-require 'singleton'
+require "singleton"
 
-require 'cuniculus'
-require 'cuniculus/supervisor'
+require "cuniculus"
+require "cuniculus/supervisor"
 
 module Cuniculus
   class CLI
@@ -17,16 +17,12 @@ module Cuniculus
     def parse(args = ARGV)
       @options = parse_options(args)
 
-      if options[:require]
-        unless File.exist?(options[:require])
-          raise ArgumentError, "Invalid '--require' argument: #{options[:require]}. File does not exist"
-        end
-        if File.directory?(options[:require])
-          raise ArgumentError, "Invalid '--require' argument: #{options[:require]}. Cannot be a directory"
-        else
-          require File.join(Dir.pwd, options[:require])
-        end
-      end
+      return unless options[:require]
+
+      raise ArgumentError, "Invalid '--require' argument: #{options[:require]}. File does not exist" unless File.exist?(options[:require])
+      raise ArgumentError, "Invalid '--require' argument: #{options[:require]}. Cannot be a directory" if File.directory?(options[:require])
+
+      require File.join(Dir.pwd, options[:require])
     end
 
     def run
@@ -41,12 +37,11 @@ module Cuniculus
         puts "Signal #{sig} not supported"
       end
 
-
       launch(pipe_reader)
     end
 
     def launch(pipe_reader)
-      config = Cuniculus.consumer_config
+      config = Cuniculus.config
       supervisor = Cuniculus::Supervisor.new(config)
 
       begin
@@ -68,7 +63,7 @@ module Cuniculus
 
     def handle_signal(sig)
       case sig
-      when 'INT', 'TERM'
+      when "INT", "TERM"
         raise Interrupt
       end
     end
@@ -83,23 +78,20 @@ module Cuniculus
     end
 
     def option_parser(opts)
-      parser = OptionParser.new do |o|
-        o.on('-r', '--require [PATH]', 'location of file required before starting consumer') do |arg|
+      OptionParser.new do |o|
+        o.on("-r", "--require [PATH]", "location of file required before starting consumer") do |arg|
           opts[:require] = arg
         end
 
-        o.on('-I', '--include [DIR]', 'add directory to LOAD_PATH') do |arg|
+        o.on("-I", "--include [DIR]", "add directory to LOAD_PATH") do |arg|
           $LOAD_PATH << arg
         end
 
-        o.on "-V", "--version", "print version and exit" do |arg|
+        o.on "-V", "--version", "print version and exit" do
           puts "Cuniculus #{Cuniculus.version}"
           exit(0)
         end
       end
-
-      parser
     end
   end
 end
-

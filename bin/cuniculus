@@ -2,11 +2,10 @@
 
 # frozen_string_literal: true
 
-$LOAD_PATH.unshift(File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib')))
+$LOAD_PATH.unshift(File.expand_path(File.join(File.dirname(__FILE__), "..", "lib")))
 
-require 'cuniculus/cli'
+require "cuniculus/cli"
 
 cli = Cuniculus::CLI.instance
 cli.parse
 cli.run
-
