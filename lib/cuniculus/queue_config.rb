@@ -8,12 +8,14 @@ module Cuniculus
   class QueueConfig
     OPTS = {}.freeze
 
+    DEFAULT_MAX_RETRY = 4
+
     ATTRS = %i[max_retry name thread_pool_size].freeze
     attr_reader(*ATTRS)
 
     def initialize(opts = OPTS)
       @name = read_opt(opts, "name") || "default"
-      @max_retry = read_opt(opts, "max_retry") || 4
+      @max_retry = read_opt(opts, "max_retry") || DEFAULT_MAX_RETRY
       @thread_pool_size = read_opt(opts, "thread_pool_size")
     end
 

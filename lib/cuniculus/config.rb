@@ -24,7 +24,7 @@ module Cuniculus
       @exchange_name = "cuniculus"
     end
 
-    def validate!
+    def declare!
       conn = ::Bunny.new(rabbitmq_opts.merge(ENFORCED_CONN_OPTS))
       conn.start
       ch = conn.create_channel

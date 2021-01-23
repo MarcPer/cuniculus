@@ -49,7 +49,7 @@ module Cuniculus
       return nil unless (%w[class args] - msg.keys).empty?
 
       msg
-    rescue StandardError => ex
+    rescue StandardError => _ex
       nil
     end
 
