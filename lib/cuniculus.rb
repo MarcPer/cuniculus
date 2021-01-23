@@ -12,7 +12,7 @@ module Cuniculus
   def self.configure
     cfg = Cuniculus::Config.new
     yield cfg
-    cfg.validate!
+    cfg.declare!
     @config = cfg
     Cuniculus::RMQPool.configure(cfg)
   end

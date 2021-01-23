@@ -1,6 +1,6 @@
 name: Development
 
-on: [push, pull_request]
+on: [pull_request]
 
 jobs:
   test:
@@ -33,10 +33,15 @@ jobs:
     - name: Run tests
       timeout-minutes: 5
       run: ${{matrix.env}} bundle exec rspec
+      env:
+        RMQ_HOST: localhost
 
     services:
       rabbitmq:
-        image: rabbitmq:3.8.9
+        image: 'rabbitmq:3.8.9-management'
+        ports:
+          - '5672:5672'
+          - '15672:15672'
         env:
           RABBITMQ_DEFAULT_USER: guest
           RABBITMQ_DEFAULT_PASS: guest

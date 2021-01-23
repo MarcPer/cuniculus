@@ -14,6 +14,8 @@ services:
     build:
       context: '.'
       dockerfile: Dockerfile
+    environment:
+      RMQ_HOST: 'rabbitmq'
     entrypoint: /bin/bash
     command: "-c 'trap : TERM INT; sleep infinity & wait'"
     volumes:
