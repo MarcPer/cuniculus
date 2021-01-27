@@ -77,6 +77,19 @@ Cuniculus.configure do |cfg|
 end
 ```
 
+## Error handling
+
+By default, exceptions raised when consuming a job are logged to STDOUT. This can be overriden with the `Cuniculus.error_handler` method:
+
+```ruby
+Cuniculus.error_handler do |e|
+  puts "Oh nein! #{e}"
+end
+```
+
+The method expects a block that will receive an exception, and run in the scope of the Worker instance.
+
+
 ## How it works
 
 Cuniculus code and conventions are very much inspired by another Ruby job queue library: [Sidekiq](https://github.com/mperham/sidekiq).

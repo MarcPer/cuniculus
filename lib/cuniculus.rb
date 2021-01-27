@@ -25,7 +25,8 @@ module Cuniculus
     @logger ||= Cuniculus::Logger.new($stdout, level: Logger::INFO)
   end
 
-  def self.log_formatter
-    @log_formatter ||= Cuniculus::Logger::Formatters::Standard.new
+  def self.error_handler(&block)
+    Cuniculus::Consumer.define_method(:handle_error, &block)
+    Cuniculus::Consumer.instance_eval { private :handle_error }
   end
 end

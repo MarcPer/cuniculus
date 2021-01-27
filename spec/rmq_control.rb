@@ -15,7 +15,7 @@ class RMQControl
         begin
           res = Net::HTTP.start(RMQ_HOST, 15672) do |http|
             uri = URI("http://#{RMQ_HOST}:15672/api/aliveness-test/%2F")
-            req = Net::HTTP::Get.new(uri) 
+            req = Net::HTTP::Get.new(uri)
             req.basic_auth "guest", "guest"
             http.request(req)
           end
@@ -35,7 +35,7 @@ class RMQControl
     def get_queues
       res = Net::HTTP.start(RMQ_HOST, 15672) do |http|
         uri = URI("http://#{RMQ_HOST}:15672/api/queues/%2F")
-        req = Net::HTTP::Get.new(uri) 
+        req = Net::HTTP::Get.new(uri)
         req.basic_auth "guest", "guest"
         http.request(req)
       end
@@ -47,7 +47,7 @@ class RMQControl
       Net::HTTP.start(RMQ_HOST, 15672) do |http|
         queue_names.each do |queue_name|
           uri = URI("http://#{RMQ_HOST}:15672/api/queues/%2F/#{queue_name}")
-          req = Net::HTTP::Delete.new(uri) 
+          req = Net::HTTP::Delete.new(uri)
           req.basic_auth "guest", "guest"
           http.request(req)
         end
@@ -57,7 +57,7 @@ class RMQControl
     def get_exchanges
       res = Net::HTTP.start(RMQ_HOST, 15672) do |http|
         uri = URI("http://#{RMQ_HOST}:15672/api/exchanges/%2F")
-        req = Net::HTTP::Get.new(uri) 
+        req = Net::HTTP::Get.new(uri)
         req.basic_auth "guest", "guest"
         http.request(req)
       end
@@ -69,7 +69,7 @@ class RMQControl
       Net::HTTP.start(RMQ_HOST, 15672) do |http|
         [Cuniculus::CUNICULUS_EXCHANGE, Cuniculus::CUNICULUS_DLX_EXCHANGE].each do |x|
           uri = URI("http://#{RMQ_HOST}:15672/api/exchanges/%2F/#{x}")
-          req = Net::HTTP::Delete.new(uri) 
+          req = Net::HTTP::Delete.new(uri)
           req.basic_auth "guest", "guest"
           http.request(req)
         end

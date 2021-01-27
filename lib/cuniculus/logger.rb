@@ -7,7 +7,7 @@ module Cuniculus
   class Logger < ::Logger
     def initialize(*args, **kwargs)
       super
-      self.formatter = Cuniculus.log_formatter
+      self.formatter = Formatters::Standard.new
     end
 
     module Formatters

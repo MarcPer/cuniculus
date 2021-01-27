@@ -26,8 +26,8 @@ module Cuniculus
   ).name
 
   (
-    # Error raised when Cuniculus is unable to connect to RabbitMQ with
-    # the parameters it was given.
-    BadlyFormattedJobMessage = Class.new(Error)
+    # Error raised when the Cuniculus consumer receives an improperly formatted
+    # job message.
+    BadlyFormattedPayload = Class.new(Error)
   ).name
 end

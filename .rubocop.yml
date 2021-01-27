@@ -16,11 +16,17 @@ AllCops:
     - cuniculus.gemspec
   DisabledByDefault: true
 
+Layout/TrailingWhitespace:
+  Enabled: true
+
 Metrics:
   Enabled: false
 
 Style:
   Enabled: true
+
+Style/Alias:
+  Enabled: false
 
 Style/StringLiterals:
   EnforcedStyle: double_quotes
