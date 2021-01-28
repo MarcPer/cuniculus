@@ -14,6 +14,7 @@ RSpec.describe Cuniculus::QueueConfig do
     @conn = ::Bunny.new(rmq_opts)
     @conn.start
     @channel = @conn.create_channel
+    RMQControl.wait_live(10)
   end
 
   before do

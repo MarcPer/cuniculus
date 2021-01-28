@@ -12,6 +12,7 @@ RSpec.describe Cuniculus::Config do
   before(:all) do
     rmq_host = ENV["RMQ_HOST"] || "rabbitmq"
     @rmq_opts = { host: rmq_host, port: 5672, user: "guest", pass: "guest", vhost: "/" }
+    RMQControl.wait_live(10)
   end
 
   before do

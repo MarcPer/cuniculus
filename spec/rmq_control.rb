@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "json"
 require "net/http"
 require "cuniculus/core"
 
@@ -7,8 +8,31 @@ class RMQControl
   RMQ_HOST = ENV["RMQ_HOST"] || "rabbitmq"
 
   class << self
+    def wait_live(timeout)
+      count = 0
+      loop do
+        break if count >= timeout
+        begin
+          res = Net::HTTP.start(RMQ_HOST, 15672) do |http|
+            uri = URI("http://#{RMQ_HOST}:15672/api/aliveness-test/%2F")
+            req = Net::HTTP::Get.new(uri) 
+            req.basic_auth "guest", "guest"
+            http.request(req)
+          end
+
+          parsed = JSON.parse(res.body)
+          return if parsed["status"] == "ok"
+        rescue StandardError
+        end
+
+        sleep 1
+        count += 1
+      end
+
+      raise "Timeout waiting for RMQ to start" if count >= timeout
+    end
+
     def get_queues
-      require "json"
       res = Net::HTTP.start(RMQ_HOST, 15672) do |http|
         uri = URI("http://#{RMQ_HOST}:15672/api/queues/%2F")
         req = Net::HTTP::Get.new(uri) 
@@ -31,7 +55,6 @@ class RMQControl
     end
 
     def get_exchanges
-      require "json"
       res = Net::HTTP.start(RMQ_HOST, 15672) do |http|
         uri = URI("http://#{RMQ_HOST}:15672/api/exchanges/%2F")
         req = Net::HTTP::Get.new(uri) 
