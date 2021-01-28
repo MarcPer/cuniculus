@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "rspec"
+require "pry"
 
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 RSpec.configure do |config|
@@ -56,3 +57,4 @@ RSpec.configure do |config|
 
   Kernel.srand config.seed
 end
+

@@ -11,21 +11,24 @@ RSpec.describe Cuniculus::QueueConfig do
   before(:all) do
     rmq_host = ENV["RMQ_HOST"] || "rabbitmq"
     rmq_opts = { host: rmq_host, port: 5672, user: "guest", pass: "guest", vhost: "/" }
+    RMQControl.wait_live(10)
     @conn = ::Bunny.new(rmq_opts)
     @conn.start
-    @channel = @conn.create_channel
-    RMQControl.wait_live(10)
   end
 
-  before do
+  before(:each) do
+    @channel = @conn.create_channel
+    @channel.direct(Cuniculus::CUNICULUS_EXCHANGE, { durable: true })
+    @channel.direct(Cuniculus::CUNICULUS_DLX_EXCHANGE, { durable: true })
+
     # Make sure to clear both the queue in RMQ and the cached queue in @channel
     @channel.queues.each_value(&:delete)
-    RMQControl.delete_queues(%w[default default_1 default_2])
+    RMQControl.delete_queues(["default"])
   end
 
-  after do
+  after(:each) do
     @channel.queues.each_value(&:delete)
-    RMQControl.delete_queues(%w[default default_1 default_2])
+    RMQControl.delete_queues(["default"])
   end
 
   describe "declare!" do
@@ -42,11 +45,11 @@ RSpec.describe Cuniculus::QueueConfig do
 
     context "when a queue already exists with conflicting configs" do
       before do
-        @channel.queue("default", durable: false)
+        channel = @conn.create_channel # separate channel to avoid the cached queue in @channel
+        channel.queue("default", durable: false)
       end
       it "raises a RMQQueueConfigurationConflict error" do
-        channel = @conn.create_channel # separate channel to avoid the cached queue in @channel
-        expect { subject.declare!(channel) }.to raise_error(Cuniculus::RMQQueueConfigurationConflict)
+        expect { subject.declare!(@channel) }.to raise_error(Cuniculus::RMQQueueConfigurationConflict)
       end
     end
   end

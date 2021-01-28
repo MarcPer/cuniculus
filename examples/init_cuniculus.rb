@@ -16,3 +16,7 @@ rabbitmq_conn = {
 Cuniculus.configure do |cfg|
   cfg.rabbitmq_opts = rabbitmq_conn
 end
+
+Cuniculus.error_handler do |e|
+  puts "Oh nein! #{e}"
+end
