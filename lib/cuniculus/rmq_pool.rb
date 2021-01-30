@@ -26,7 +26,7 @@ module Cuniculus
         @channel_pool = ConnectionPool.new(timeout: 1, size: @config.pub_thr_pool_size) do
           ch = @conn.create_channel
           ch.direct(Cuniculus::CUNICULUS_EXCHANGE, { durable: true })
-          ch.direct(Cuniculus::CUNICULUS_DLX_EXCHANGE, { durable: true })
+          ch.fanout(Cuniculus::CUNICULUS_DLX_EXCHANGE, { durable: true })
           ch
         end
       end

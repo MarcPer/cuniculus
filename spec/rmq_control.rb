@@ -43,6 +43,17 @@ class RMQControl
       parsed.map { |x| x["name"] }
     end
 
+    def get_bindings(exchange_name)
+      res = Net::HTTP.start(RMQ_HOST, 15672) do |http|
+        uri = URI("http://#{RMQ_HOST}:15672/api/exchanges/%2F/#{exchange_name}/bindings/source")
+        req = Net::HTTP::Get.new(uri)
+        req.basic_auth "guest", "guest"
+        http.request(req)
+      end
+      parsed = JSON.parse(res.body)
+      parsed.select { |b| b["destination_type"] == "queue" }.map { |x| x["destination"] }
+    end
+
     def delete_queues(queue_names)
       Net::HTTP.start(RMQ_HOST, 15672) do |http|
         queue_names.each do |queue_name|

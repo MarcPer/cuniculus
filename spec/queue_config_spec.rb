@@ -19,7 +19,7 @@ RSpec.describe Cuniculus::QueueConfig do
   before(:each) do
     @channel = @conn.create_channel
     @channel.direct(Cuniculus::CUNICULUS_EXCHANGE, { durable: true })
-    @channel.direct(Cuniculus::CUNICULUS_DLX_EXCHANGE, { durable: true })
+    @channel.fanout(Cuniculus::CUNICULUS_DLX_EXCHANGE, { durable: true })
 
     # Make sure to clear both the queue in RMQ and the cached queue in @channel
     @channel.queues.each_value(&:delete)
