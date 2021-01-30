@@ -18,6 +18,7 @@ RSpec.describe Cuniculus::Config do
   before do
     config.rabbitmq_opts = @rmq_opts
     RMQControl.delete_exchanges
+    RMQControl.delete_queues(["cun_dead"])
   end
 
   # Make sure to recreate the exchanges so other tests can run
@@ -46,6 +47,11 @@ RSpec.describe Cuniculus::Config do
         subject.declare!
         expect(RMQControl.get_queues).not_to include("default")
       end
+    end
+
+    it "declares dead queue and binds to DLX exchange" do
+      subject.declare!
+      expect(RMQControl.get_bindings(Cuniculus::CUNICULUS_DLX_EXCHANGE)).to include("cun_dead")
     end
   end
 end

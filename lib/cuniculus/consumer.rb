@@ -17,6 +17,7 @@ module Cuniculus
 
     def start
       @exchange = channel.direct(Cuniculus::CUNICULUS_EXCHANGE, { durable: true })
+      # channel.direct(Cuniculus::CUNICULUS_DLX_EXCHANGE, { durable: true })
       @job_queue = queue_config.declare!(channel)
       @_consumer = job_queue.subscribe(manual_ack: true, block: false) do |delivery_info, properties, payload|
         run_job(delivery_info, properties, payload)

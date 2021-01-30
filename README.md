@@ -74,6 +74,7 @@ rabbitmq_conn = {
 Cuniculus.configure do |cfg|
   cfg.rabbitmq_opts = rabbitmq_conn
   cfg.pub_thr_pool_size = 5         # Only affects job producers
+  cfg.dead_queue_ttl = 1000 * 60 * 60 * 24 * 30 # keep failed jobs for 30 days
 end
 ```
 
@@ -89,6 +90,16 @@ end
 
 The method expects a block that will receive an exception, and run in the scope of the Worker instance.
 
+## Retry mechanism
+
+Cuniculus declares a `default` queue, together with some `default_{n}` queues used for job retries.
+When a job raises an exception, it is placed into the `default_1` queue for the first retry. It stays there for some pre-defined time, and then gets moved back into the `default` queue for execution.
+
+If it fails again, it gets moved to `default_2`, where it stays for a longer period until it's moved back directly into the `default` queue again.
+
+This goes on until there are no more retry attempts, in which case the job gets moved into the `cun_dead` queue. It can be then only be moved back into the `default` queue manually; otherwise it is discarded after some time, defined as the `dead_queue_ttl`, in milliseconds (by default, 180 days).
+
+Note that if a job cannot even be parsed, it is moved straight to the dead queue, as there's no point in retrying.
 
 ## How it works
 
