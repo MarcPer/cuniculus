@@ -21,7 +21,6 @@ module Cuniculus
 
       raise ArgumentError, "Invalid '--require' argument: #{options[:require]}. File does not exist" unless File.exist?(options[:require])
       raise ArgumentError, "Invalid '--require' argument: #{options[:require]}. Cannot be a directory" if File.directory?(options[:require])
-
       require File.join(Dir.pwd, options[:require])
     end
 
@@ -36,6 +35,7 @@ module Cuniculus
       rescue ArgumentError
         puts "Signal #{sig} not supported"
       end
+
 
       launch(pipe_reader)
     end
@@ -87,7 +87,7 @@ module Cuniculus
           $LOAD_PATH << arg
         end
 
-        o.on "-V", "--version", "print version and exit" do
+        o.on "-V", "--version", "print version and exit" do |arg|
           puts "Cuniculus #{Cuniculus.version}"
           exit(0)
         end
@@ -95,3 +95,4 @@ module Cuniculus
     end
   end
 end
+

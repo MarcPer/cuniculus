@@ -7,8 +7,11 @@ require "cuniculus/exceptions"
 require "cuniculus/consumer"
 
 module Cuniculus
-  class Supervisor
+  module SupervisorMethods
+    attr_reader :config
+
     def initialize(config)
+      @config = config
       conn = connect(config.rabbitmq_opts)
       @consumers = create_consumers(conn, config.queues)
       @consumer_lock = Mutex.new
@@ -56,4 +59,9 @@ module Cuniculus
       end
     end
   end
+
+  class Supervisor
+    include SupervisorMethods
+  end
 end
+

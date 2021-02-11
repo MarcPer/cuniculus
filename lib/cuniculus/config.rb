@@ -10,9 +10,10 @@ module Cuniculus
     }.freeze
 
     attr_accessor :dead_queue_ttl, :exchange_name, :pub_thr_pool_size, :rabbitmq_opts
-    attr_reader :queues
+    attr_reader :queues, :opts
 
     def initialize
+      @opts = {}
       @queues = { "default" => QueueConfig.new({ "name" => "default" }) }
       @rabbitmq_opts = {
         host: "127.0.0.1",
