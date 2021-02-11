@@ -20,3 +20,5 @@ end
 Cuniculus.error_handler do |e|
   puts "Oh nein! #{e}"
 end
+
+Cuniculus.plugin(:health_check)
