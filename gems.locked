@@ -23,6 +23,7 @@ GEM
       coderay (~> 1.1)
       method_source (~> 1.0)
     rainbow (3.0.0)
+    redcarpet (3.5.1)
     regexp_parser (2.0.3)
     rexml (3.2.4)
     rspec (3.10.0)
@@ -52,6 +53,7 @@ GEM
     ruby-progressbar (1.11.0)
     unicode-display_width (2.0.0)
     warning (1.1.0)
+    yard (0.9.26)
 
 PLATFORMS
   ruby
@@ -59,9 +61,11 @@ PLATFORMS
 DEPENDENCIES
   cuniculus!
   pry
+  redcarpet
   rspec
   rubocop
   warning
+  yard
 
 BUNDLED WITH
    2.1.4

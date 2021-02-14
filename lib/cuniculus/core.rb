@@ -6,20 +6,26 @@ module Cuniculus
   CUNICULUS_EXCHANGE = "cuniculus"
   CUNICULUS_DLX_EXCHANGE = "cuniculus_dlx" # Dead Letter Exchange
 
+  # Core Cuniculus methods
   module CuniculusMethods
-    # Convert RabbitMQ message into Ruby object for processing.
+    # Convert a RabbitMQ message into Ruby object for processing.
     def load_job(rmq_msg)
       ::JSON.parse(rmq_msg)
     end
 
-    # Convert Ruby object for publishing to RabbitMQ.
+    # Serializes a Ruby object for publishing to RabbitMQ.
     def dump_job(job)
       ::JSON.dump(job)
     end
 
-    # Convert the +exception+ to the given class.  The given class should be
-    # <tt>Cuniculus::Error</tt> or a subclass.  Returns an instance of +klass+ with
-    # the message and backtrace of +exception+.
+    # Convert the input `exception` to the given class. The given class should be
+    # {Cuniculus::Error} or a subclass.  Returns an instance of `klass` with
+    # the message and backtrace of `exception`.
+    #
+    # @param exception [Exception] The exception being wrapped
+    # @param [Cuniculus::Error] The subclass of `Cuniculus::Error`
+    #
+    # @return [Cuniculus::Error] An instance of the input `Cuniculus::Error`
     def convert_exception_class(exception, klass)
       return exception if exception.is_a?(klass)
 

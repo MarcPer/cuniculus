@@ -25,8 +25,36 @@ Metrics:
 Style:
   Enabled: true
 
+Style/ArgumentsForwarding:
+  Enabled: false
+
 Style/Alias:
   Enabled: false
+
+
+Style/CollectionCompact:
+  Enabled: false
+
+Style/DocumentDynamicEvalDefinition:
+  Enabled: true
+
+Style/EndlessMethod:
+  Enabled: false
+
+Style/HashExcept:
+  Enabled: false
+
+Style/NegatedIfElseCondition:
+  Enabled: true
+
+Style/NilLambda:
+  Enabled: true
+
+Style/RedundantArgument:
+  Enabled: false
+
+Style/SwapValues:
+  Enabled: true
 
 Style/StringLiterals:
   EnforcedStyle: double_quotes
@@ -35,5 +63,4 @@ Style/NumericLiterals:
   Enabled: false
 
 Style/Documentation:
-  Exclude:
-    - examples/*
+  Enabled: false
