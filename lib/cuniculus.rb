@@ -2,7 +2,7 @@
 
 require "cuniculus/version"
 
-raise "Cuniculus #{Cuniculus.version} does not support Ruby versions below 2.7.2." if RUBY_PLATFORM != "java" && Gem::Version.new(RUBY_VERSION) < Gem::Version.new("2.7.2")
+raise "Cuniculus #{Cuniculus.version} does not support Ruby versions below 2.6." if RUBY_PLATFORM != "java" && Gem::Version.new(RUBY_VERSION) < Gem::Version.new("2.6")
 
 require "cuniculus/logger"
 require "cuniculus/config"

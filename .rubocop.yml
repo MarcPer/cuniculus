@@ -10,7 +10,7 @@
 # See https://docs.rubocop.org/rubocop/configuration
 
 AllCops:
-  TargetRubyVersion: 2.5
+  TargetRubyVersion: 2.6
   Exclude:
     - gems.rb
     - cuniculus.gemspec

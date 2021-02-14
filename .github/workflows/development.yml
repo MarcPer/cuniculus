@@ -13,7 +13,9 @@ jobs:
           - ubuntu
         
         ruby:
+          - 3.0
           - 2.7
+          - 2.6
         
         experimental: [false]
         env: [""]
@@ -30,6 +32,10 @@ jobs:
         ruby-version: ${{matrix.ruby}}
         bundler-cache: true
     
+    - name: Rubocop
+      timeout-minutes: 1
+      run: ${{matrix.env}} bundle exec rubocop lib/ spec/
+
     - name: Run tests
       timeout-minutes: 5
       run: ${{matrix.env}} bundle exec rspec

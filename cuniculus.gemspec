@@ -16,7 +16,7 @@ CUNICULUS_GEMSPEC = Gem::Specification.new do |gem|
     "bug_tracker_uri" => "https://github.com/MarcPer/cuniculus/issues",
     "changelog_uri" => "https://github.com/MarcPer/cuniculus/CHANGELOG.md"
   }
-  gem.required_ruby_version = ">= 2.7.2"
+  gem.required_ruby_version = ">= 2.6"
   gem.files = %w[LICENSE CHANGELOG.md README.md bin/cuniculus] + Dir["lib/**/*.rb"]
   gem.bindir = "bin"
   gem.executables << "cuniculus"
