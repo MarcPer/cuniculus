@@ -23,12 +23,12 @@ RSpec.describe Cuniculus::QueueConfig do
 
     # Make sure to clear both the queue in RMQ and the cached queue in @channel
     @channel.queues.each_value(&:delete)
-    RMQControl.delete_queues(["default"])
+    RMQControl.delete_queues(["cun_default"])
   end
 
   after(:each) do
     @channel.queues.each_value(&:delete)
-    RMQControl.delete_queues(["default"])
+    RMQControl.delete_queues(["cun_default"])
   end
 
   describe "declare!" do
@@ -39,14 +39,14 @@ RSpec.describe Cuniculus::QueueConfig do
 
       it "declares base queue and associated retry queues" do
         subject.declare!(@channel)
-        expect(@channel.queues.keys).to eq(%w[default default_1 default_2])
+        expect(@channel.queues.keys).to eq(%w[cun_default cun_default_1 cun_default_2])
       end
     end
 
     context "when a queue already exists with conflicting configs" do
       before do
         channel = @conn.create_channel # separate channel to avoid the cached queue in @channel
-        channel.queue("default", durable: false)
+        channel.queue("cun_default", durable: false)
       end
       it "raises a RMQQueueConfigurationConflict error" do
         expect { subject.declare!(@channel) }.to raise_error(Cuniculus::RMQQueueConfigurationConflict)

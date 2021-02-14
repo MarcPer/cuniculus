@@ -35,17 +35,17 @@ RSpec.describe Cuniculus::Config do
 
     it "creates the default queue" do
       subject.declare!
-      expect(RMQControl.get_queues).to include("default")
+      expect(RMQControl.get_queues).to include("cun_default")
     end
 
     context "when default_queue is set to false" do
       before do
-        RMQControl.delete_queues(["default"])
+        RMQControl.delete_queues(["cun_default"])
         config.default_queue = false
       end
       it "creates the default queue" do
         subject.declare!
-        expect(RMQControl.get_queues).not_to include("default")
+        expect(RMQControl.get_queues).not_to include("cun_default")
       end
     end
 

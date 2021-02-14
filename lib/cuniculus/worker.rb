@@ -15,7 +15,7 @@ module Cuniculus
       end
 
       def publish(item)
-        routing_key = "default"
+        routing_key = "cun_default"
         payload = normalize_item(item)
         Cuniculus::RMQPool.with_exchange do |x|
           x.publish(payload, { routing_key: routing_key, persistent: true })

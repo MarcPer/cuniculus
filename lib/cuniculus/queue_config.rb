@@ -13,7 +13,7 @@ module Cuniculus
     attr_reader :max_retry, :name, :thread_pool_size
 
     def initialize(opts = OPTS)
-      @name = read_opt(opts, "name") || "default"
+      @name = read_opt(opts, "name") || "cun_default"
       @max_retry = read_opt(opts, "max_retry") || DEFAULT_MAX_RETRY
       @thread_pool_size = read_opt(opts, "thread_pool_size")
     end
