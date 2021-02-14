@@ -15,7 +15,8 @@ RSpec.describe Cuniculus::Plugins::HealthCheck do
       include Cuniculus::Plugins::HealthCheck::SupervisorMethods
     end
 
-    described_class.configure(config.opts, "0.0.0.0", 3000)
+    opts = { "bind_to" => "0.0.0.0", "port" => 0 }
+    described_class.configure(config.opts, opts)
     k.new(config)
   end
 

@@ -14,7 +14,7 @@ module Cuniculus
 
     def initialize
       @opts = {}
-      @queues = { "default" => QueueConfig.new({ "name" => "default" }) }
+      @queues = { "cun_default" => QueueConfig.new({ "name" => "cun_default" }) }
       @rabbitmq_opts = {
         host: "127.0.0.1",
         port: 5672,
@@ -36,7 +36,7 @@ module Cuniculus
     end
 
     def default_queue=(bool)
-      @queues.delete("default") unless bool
+      @queues.delete("cun_default") unless bool
     end
 
     private
