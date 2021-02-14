@@ -1,4 +1,5 @@
 .rvmrc
 .ruby-version
 examples.txt
-
+.yardoc
+yard_lib_docs

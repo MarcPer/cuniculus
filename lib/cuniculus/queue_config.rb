@@ -10,8 +10,7 @@ module Cuniculus
 
     DEFAULT_MAX_RETRY = 4
 
-    ATTRS = %i[max_retry name thread_pool_size].freeze
-    attr_reader(*ATTRS)
+    attr_reader :max_retry, :name, :thread_pool_size
 
     def initialize(opts = OPTS)
       @name = read_opt(opts, "name") || "default"

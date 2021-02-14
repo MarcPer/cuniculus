@@ -4,11 +4,11 @@ Ruby job queue backed by RabbitMQ. The word _cuniculus_ comes from the scientifi
 
 ## Getting started
 
-```
+```sh
 gem install cuniculus
 ```
 
-> The following minimal example assumes RabbitMQ is running on `localhost:5672`; see the [configuration section](#configuration) for how to change this.
+_The following minimal example assumes RabbitMQ is running on `localhost:5672`; see the [configuration section](#configuration) for how to change this._
 
 Create a worker class:
 ```ruby

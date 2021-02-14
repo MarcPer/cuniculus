@@ -31,7 +31,7 @@ module Cuniculus
       conn = ::Bunny.new(conn_opts)
       conn.start
       conn
-    rescue e
+    rescue StandardError => e
       raise Cuniculus.convert_exception_class(e, Cuniculus::RMQConnectionError)
     end
 

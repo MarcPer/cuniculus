@@ -25,7 +25,9 @@ CUNICULUS_GEMSPEC = Gem::Specification.new do |gem|
   gem.add_dependency "connection_pool", ">= 2.2.2"
 
   gem.add_development_dependency "pry"
+  gem.add_development_dependency "redcarpet"
   gem.add_development_dependency "rspec"
   gem.add_development_dependency "rubocop"
   gem.add_development_dependency "warning"
+  gem.add_development_dependency "yard"
 end
