@@ -1,0 +1,239 @@
+#!/usr/bin/env ruby
+
+# frozen_string_literal: true
+
+$LOAD_PATH.unshift(File.expand_path(File.join(File.dirname(__FILE__), "..", "lib")))
+$stdout.sync = true
+
+require "optparse"
+require "singleton"
+require "toxiproxy"
+
+require "cuniculus"
+require "cuniculus/rmq_pool"
+require "cuniculus/supervisor"
+require "cuniculus/worker"
+
+
+LOCK_FILENAME = "lock.local"
+$lock_file = File.new(LOCK_FILENAME, "w", 0644)
+
+module CuniculusBenchmarks
+  RABBITMQ_CONN = {
+    host: "127.0.0.1",
+    port: 5673,
+    ssl: false,
+    vhost: "/",
+    user: "guest",
+    pass: "guest",
+    auth_mechanism: "PLAIN"
+  }.freeze
+
+  class NoOpWorker
+    include Cuniculus::Worker
+
+    def perform(iter, start_time = nil)
+      if iter == "done"
+        $lock_file.flock(File::LOCK_UN)
+      elsif start_time
+        latency = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
+        $lock_file.puts(latency)
+      end
+    end
+
+    def self.publish(item)
+      routing_key = "benchmark"
+      payload = normalize_item(item)
+      Cuniculus::RMQPool.with_exchange do |x|
+        x.publish(payload, { routing_key: routing_key, persistent: false })
+      end
+    end
+  end
+
+  class CLI
+    include Singleton
+
+    attr_reader :config, :options
+
+    def parse(args = ARGV)
+      @options = parse_options(args)
+    end
+
+    def setup
+      Toxiproxy.populate([{
+        "name" => "rmq",
+        "listen" => "127.0.0.1:5673",
+        "upstream" => "rabbitmq:5672"
+      }])
+
+      Cuniculus.configure do |cfg|
+        cfg.rabbitmq_opts = RABBITMQ_CONN
+        cfg.default_queue = false
+        cfg.add_queue({ "name" => "benchmark", "max_retry" => 0, "durable" => false, "prefetch_count" => options[:prefetch_count] || 10 })
+      end
+
+      @config = Cuniculus.config
+
+      print "Populating queue... "
+      populate_queue
+      puts "done"
+      sleep 1
+
+      print "Starting monitoring thread... "
+      start_monitor(config.rabbitmq_opts)
+      puts "done"
+    end
+
+    def run
+      pipe_reader, pipe_writer = IO.pipe
+      sigs = %w[INT TERM]
+
+      sigs.each do |sig|
+        trap sig do
+          pipe_writer.puts(sig)
+        end
+      rescue ArgumentError
+        puts "Signal #{sig} not supported"
+      end
+
+
+      start_ts = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      $lock_file.write(start_ts)
+      $lock_file.flock(File::LOCK_EX)
+
+      # Add a final job that will unlock the file
+      payload = Cuniculus.dump_job({ "class" => NoOpWorker, "args" => ["done", nil] })
+      Cuniculus::RMQPool.with_exchange do |x|
+        x.publish(payload, { routing_key: "benchmark", persistent: false })
+      end
+
+      puts "Starting consumers"
+      launch(pipe_reader)
+    end
+
+    def start_monitor(conn_opts)
+      Thread.new do
+        conn = ::Bunny.new(conn_opts)
+        conn.start
+        ch = conn.create_channel(nil, 1)
+
+        queue = config.queues["benchmark"].declare!(ch)
+
+        File.open(LOCK_FILENAME, "r") do |f|
+          f.flock(File::LOCK_EX)
+          start_time = f.gets.chomp.strip.to_f
+          puts("Total time spent: #{Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time} seconds")
+        end
+
+
+        lat_sample_size = options[:lat_sample_size] || 100
+        if queue.message_count == 0
+          puts "Measuring latency over #{lat_sample_size} samples..."
+          $lock_file.truncate(0)
+          lat_sample_size.times do |i|
+            $lock_file.flock(File::LOCK_EX)
+            NoOpWorker.perform_async(i, Process.clock_gettime(Process::CLOCK_MONOTONIC))
+            NoOpWorker.perform_async("done", nil)
+            File.open(LOCK_FILENAME, "r") { |f| f.flock(File::LOCK_EX) }
+          end
+          File.open(LOCK_FILENAME, "r", chomp: true) do |f|
+            f.flock(File::LOCK_EX)
+            lats = f.readlines.map(&:to_f).sum
+            puts "Average latency: #{lats/lat_sample_size} seconds"
+          end
+          puts "done"
+
+          @supervisor.stop
+
+          sleep 2
+
+          exit(0)
+        end
+      end
+    end
+
+    def launch(pipe_reader)
+      @supervisor = Cuniculus::Supervisor.new(config)
+
+      begin
+        Cuniculus.logger.info("Starting process")
+        Toxiproxy[:rmq].downstream(:latency, latency: options[:latency] || 1).apply do
+          @supervisor.start
+
+          while (readable_io = IO.select([pipe_reader]))
+            signal = readable_io.first[0].gets.strip
+            handle_signal(signal)
+          end
+        end
+      rescue Interrupt
+        Cuniculus.logger.info("Interrupt received; shutting down")
+        @supervisor.stop
+        Cuniculus.logger.info("Shutdown complete")
+      end
+
+      exit(0)
+    end
+
+    def handle_signal(sig)
+      case sig
+      when "INT", "TERM"
+        raise Interrupt
+      end
+    end
+
+    private
+
+    def populate_queue
+      niter = options[:num_jobs] || 100_000
+      niter.times do |iter|
+        payload = Cuniculus.dump_job({ "class" => NoOpWorker, "args" => [iter, nil] })
+        Cuniculus::RMQPool.with_exchange do |x|
+          x.publish(payload, { routing_key: "benchmark", persistent: false })
+        end
+      end
+    end
+
+
+    def parse_options(argv)
+      opts = {}
+      @parser = option_parser(opts)
+      @parser.parse!(argv)
+      opts
+    end
+
+    def option_parser(opts)
+      OptionParser.new do |o|
+        o.on("-l", "--latency [INT]", "latency in ms added when consuming from RabbitMQ (default is 1)") do |arg|
+          opts[:latency] = arg.to_i
+        end
+
+        o.on("-n", "--num_jobs [INT]", "number of jobs for throughput test (default is 100_000)") do |arg|
+          opts[:num_jobs] = arg.to_i
+        end
+
+        o.on("-p", "--prefetch_count [INT]", "prefetch count used for the test (default is 10)") do |arg|
+          opts[:prefetch_count] = arg.to_i
+        end
+
+        o.on("-s", "--sample_size [INT]", "sample size for average latency test (default is 100)") do |arg|
+          opts[:lat_sample_size] = arg.to_i
+        end
+
+        o.on "-V", "--version", "print version and exit" do |arg|
+          puts "Cuniculus #{Cuniculus.version}"
+          exit(0)
+        end
+      end
+    end
+  end
+end
+
+
+Kernel.at_exit do
+  File.delete(LOCK_FILENAME) if File.exist?(LOCK_FILENAME)
+end
+cli = CuniculusBenchmarks::CLI.instance
+cli.parse
+cli.setup
+cli.run
+
