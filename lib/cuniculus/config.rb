@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "cuniculus/core"
+require "cuniculus/exceptions"
 require "cuniculus/queue_config"
 
 module Cuniculus
@@ -23,7 +24,14 @@ module Cuniculus
         vhost: "/"
       }
       @exchange_name = "cuniculus"
+      @pub_thr_pool_size = 5
       @dead_queue_ttl = 1000 * 60 * 60 * 24 * 180 # 180 days
+    end
+
+    def add_queue(qopts)
+      qname = qopts["name"].to_s
+      raise Cuniculus::ConfigError, "Missing 'name' key in queue configuration hash" if qname.strip.empty?
+      @queues[qname] = QueueConfig.new(qopts)
     end
 
     def declare!

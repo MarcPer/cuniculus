@@ -9,24 +9,27 @@ module Cuniculus
     OPTS = {}.freeze
 
     DEFAULT_MAX_RETRY = 4
+    DEFAULT_PREFETCH_COUNT = 10
 
-    attr_reader :max_retry, :name, :thread_pool_size
+    attr_reader :durable, :max_retry, :name, :prefetch_count, :thread_pool_size
 
     def initialize(opts = OPTS)
+      @durable = read_opt(opts, "durable").nil? ? true : read_opt(opts, "durable")
       @name = read_opt(opts, "name") || "cun_default"
       @max_retry = read_opt(opts, "max_retry") || DEFAULT_MAX_RETRY
+      @prefetch_count = read_opt(opts, "prefetch_count") || DEFAULT_PREFETCH_COUNT
       @thread_pool_size = read_opt(opts, "thread_pool_size")
     end
 
     def read_opt(opts, key)
-      opts[key.to_s] || opts[key.to_sym]
+      opts[key.to_s].nil? ? opts[key.to_sym] : opts[key.to_s]
     end
 
     def declare!(channel)
       queue_name = name
       base_q = channel.queue(
         queue_name,
-        durable: true,
+        durable: durable,
         exclusive: false,
         arguments: { "x-dead-letter-exchange" => Cuniculus::CUNICULUS_DLX_EXCHANGE }
       )
