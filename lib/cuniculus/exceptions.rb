@@ -26,6 +26,10 @@ module Cuniculus
   end
 
   (
+    ConfigError = Class.new(Error)
+  ).name
+
+  (
     RMQConnectionError = Class.new(Error)
   ).name
 

@@ -5,7 +5,7 @@ module Cuniculus
   class JobQueue
     extend Forwardable
 
-    def_delegators :@base_queue, :subscribe
+    def_delegators :@base_queue, :message_count, :subscribe
 
     def initialize(base_queue, retry_queue_names)
       @base_queue = base_queue
