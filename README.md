@@ -2,6 +2,36 @@
 
 Ruby job queue backed by RabbitMQ. The word _cuniculus_ comes from the scientific name of the European rabbit (Oryctolagus cuniculus).
 
+## Benchmarks
+
+The following measurements were performed with the `bin/run_benchmarks` utility, with different command parameters. Run it with `-h` to see its usage.
+
+To simulate network latency, [Toxiproxy](https://github.com/Shopify/toxiproxy) was used. It needs to be started with `toxiproxy-server` before running the benchmarks.
+
+Network latency (_ms_) | Prefetch count       | Throughput (_jobs/s_) | Average latency (_ms_)
+----------------------:|---------------------:|----------------------:|----------------------:
+1                      | 65535 (max. allowed) | 10225                 | 2
+10                     | 65535 (max. allowed) | 9990                  | 13
+1                      |                   50 | 8051                  | 2
+10                     |                   50 | 2500                  | 13
+100                    |                   50 | 481                   | 103
+1                      |                   25 | 7824                  | 2
+10                     |                   25 | 1824                  | 13
+50                     |                   25 | 469                   | 53
+1                      |         10 (default) | 5266                  | 2
+10                     |         10 (default) | 807                   | 13
+1                      |                    1 | 481                   | 2
+10                     |                    1 | 81                    | 13
+
+Additional benchmark parameters:
+- throughput was measured by consuming 100k jobs;
+- job latency was averaged over 200 samples;
+- Ruby 2.7.2 was used.
+
+Several remarks can be made:
+- Higher prefetch counts lead to higher throughput, but there are downsides of having it too high; see [this reference](https://www.cloudamqp.com/blog/2017-12-29-part1-rabbitmq-best-practice.html#prefetch) on how to properly tune it.
+- Network latency has a severe impact on the throughput, and the effect is larger the smaller the prefetch count is.
+
 ## Getting started
 
 ```sh
