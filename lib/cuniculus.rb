@@ -14,12 +14,14 @@ require "cuniculus/supervisor"
 module Cuniculus
 
   # Configure Cuniculus.
+  # Check {Cuniculus::Config} for the available options.
   #
   # @yield [Cuniculus::Config]
   #
   # @example Change RabbitMQ connection details.
   #   Cuniculus.configure do |cfg|
   #     cfg.rabbitmq_opts = { host: 'rmq.mycompany.com', user: 'guest', pass: 'guest' }
+  #     cfg.add_queue({ name: "new_queue", max_retry: 4 })
   #   end
   def self.configure
     cfg = Cuniculus::Config.new

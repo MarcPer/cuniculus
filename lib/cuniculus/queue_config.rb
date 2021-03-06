@@ -6,23 +6,25 @@ require "cuniculus/job_queue"
 
 module Cuniculus
   class QueueConfig
-    OPTS = {}.freeze
-
-    DEFAULT_MAX_RETRY = 4
+    DEFAULT_MAX_RETRY = 8
     DEFAULT_PREFETCH_COUNT = 10
+    DEFAULT_QUEUE_NAME = "cun_default"
+    DEFAULT_THREAD_POOL_SIZE = 5
 
     attr_reader :durable, :max_retry, :name, :prefetch_count, :thread_pool_size
 
-    def initialize(opts = OPTS)
-      @durable = read_opt(opts, "durable").nil? ? true : read_opt(opts, "durable")
-      @name = read_opt(opts, "name") || "cun_default"
-      @max_retry = read_opt(opts, "max_retry") || DEFAULT_MAX_RETRY
-      @prefetch_count = read_opt(opts, "prefetch_count") || DEFAULT_PREFETCH_COUNT
-      @thread_pool_size = read_opt(opts, "thread_pool_size")
+    def initialize(opts = {})
+      opts = opts.transform_keys(&:to_s)
+      @durable = read_opt(opts["durable"], true)
+      @name = read_opt(opts["name"], DEFAULT_QUEUE_NAME)
+      @max_retry = read_opt(opts["max_retry"], DEFAULT_MAX_RETRY)
+      @prefetch_count = read_opt(opts["prefetch_count"], DEFAULT_PREFETCH_COUNT)
+      @thread_pool_size = read_opt(opts["thread_pool_size"], DEFAULT_THREAD_POOL_SIZE)
+      freeze
     end
 
-    def read_opt(opts, key)
-      opts[key.to_s].nil? ? opts[key.to_sym] : opts[key.to_s]
+    def read_opt(val, default)
+      val.nil? ? default : val
     end
 
     def declare!(channel)
@@ -41,7 +43,7 @@ module Cuniculus
 
         q = channel.queue(
           queue_name,
-          durable: true,
+          durable: durable,
           exclusive: false,
           arguments: {
             "x-dead-letter-exchange" => Cuniculus::CUNICULUS_EXCHANGE,

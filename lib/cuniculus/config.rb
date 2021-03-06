@@ -28,7 +28,28 @@ module Cuniculus
       @dead_queue_ttl = 1000 * 60 * 60 * 24 * 180 # 180 days
     end
 
+    # Configure an additional queue
+    #
+    # Note that a single call to `add_queue` might lead to the creation of multiple queues on RabbitMQ: one base queue, and an additional queue for every retry attempt.
+    # For example, with a queue named `"test"` with `max_retry` set to `4`, 5 queues are created in RabbitMQ.
+    #
+    # For tuning `prefetch_count`, refer to [this guide](https://www.cloudamqp.com/blog/2017-12-29-part1-rabbitmq-best-practice.html#prefetch).
+    #
+    # If a queue already exists in RabbitMQ, and an attempt is done to add it again through `add_queue`, nothing happens, except if the options passed to `add_queue` conflict with the existing queue. For example if a queue exists that is durable, and `add_queue` is called with `"durable" => false`, a `Cuniculus::RMQQueueConfigurationConflict` is raised. To redeclare a queue with conflicting configurations, the original queue has first to be removed from RabbitMQ manually. This can be done, for example, through the management console.
+    #
+    # @param qopts [Hash] Queue config options.
+    # @option qopts [String] "name" Name of the queue.
+    # @option qopts [Boolean] "durable" (true) Whether queue is declared as durable in RabbitMQ. Jobs in non-durable queues may be lost if the RabbitMQ goes down.
+    # @option qopts [Integer] "max_retry" (8) Number of retries for failed jobs in this queue.
+    # @option qopts [Integer] "prefetch_count" (10) Prefetch count used when consuming jobs from this queue.
+    # @option qopts [Integer] "thread_pool_size" (5) Thread pool size for receiving jobs.
+    #
+    # @example Add queue named "critical"
+    #   Cuniculus.configure do |cfg|
+    #     cfg.add_queue({ name: "critical", max_retry: 10 })
+    #   end
     def add_queue(qopts)
+      qopts = qopts.transform_keys(&:to_s)
       qname = qopts["name"].to_s
       raise Cuniculus::ConfigError, "Missing 'name' key in queue configuration hash" if qname.strip.empty?
       @queues[qname] = QueueConfig.new(qopts)
@@ -43,6 +64,10 @@ module Cuniculus
       @queues.each_value { |q| q.declare!(ch) }
     end
 
+    # Specify if the default queue `cun_default` should be created.
+    # `cun_default` is used by workers that don't explicitly specify a queue with `cuniculus_options queue: "another_queue"`.
+    #
+    # @param bool [Boolean] If false, queue `cun_default` is not created. Defaults to `true`.
     def default_queue=(bool)
       @queues.delete("cun_default") unless bool
     end
