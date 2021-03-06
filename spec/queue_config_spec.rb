@@ -36,7 +36,6 @@ RSpec.describe Cuniculus::QueueConfig do
 
     before { stub_const("Cuniculus::QueueConfig::DEFAULT_MAX_RETRY", 2) }
     context "with default opts" do
-
       it "declares base queue and associated retry queues" do
         subject.declare!(@channel)
         expect(@channel.queues.keys).to eq(%w[cun_default cun_default_1 cun_default_2])
@@ -49,7 +48,18 @@ RSpec.describe Cuniculus::QueueConfig do
         channel.queue("cun_default", durable: false)
       end
       it "raises a RMQQueueConfigurationConflict error" do
-        expect { subject.declare!(@channel) }.to raise_error(Cuniculus::RMQQueueConfigurationConflict)
+        expect { subject.declare!(@channel) }.to raise_exception(Cuniculus::RMQQueueConfigurationConflict)
+      end
+    end
+
+    context "with non-default options" do
+      let(:opts) do
+        { name: "test_queue", durable: false, max_retry: 1, prefetch_count: 99, thread_pool_size: 7 }
+      end
+      it "declares base queue and associated retry queues" do
+        subject.declare!(@channel)
+        expect(@channel.queues.keys).to eq(%w[test_queue test_queue_1])
+        expect(@channel.queues.values.map(&:durable?)).not_to include(true)
       end
     end
   end

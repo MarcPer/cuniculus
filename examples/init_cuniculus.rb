@@ -15,6 +15,7 @@ rabbitmq_conn = {
 
 Cuniculus.configure do |cfg|
   cfg.rabbitmq_opts = rabbitmq_conn
+  cfg.add_queue({ "name" => "my_queue", "durable" => false })
 end
 
 Cuniculus.error_handler do |e|

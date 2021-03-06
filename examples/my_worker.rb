@@ -4,6 +4,7 @@ require "cuniculus/worker"
 
 class MyWorker
   include Cuniculus::Worker
+  cuniculus_options queue: "my_queue"
 
   def perform(arg1, arg2)
     puts "Processing:"

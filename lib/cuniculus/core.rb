@@ -23,7 +23,7 @@ module Cuniculus
     # the message and backtrace of `exception`.
     #
     # @param exception [Exception] The exception being wrapped
-    # @param [Cuniculus::Error] The subclass of `Cuniculus::Error`
+    # @param klass [Cuniculus::Error] The subclass of `Cuniculus::Error`
     #
     # @return [Cuniculus::Error] An instance of the input `Cuniculus::Error`
     def convert_exception_class(exception, klass)
