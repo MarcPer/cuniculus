@@ -84,7 +84,7 @@ There is also a more complete example in the Cuniculus repository itself. To run
   bin/cuniculus -I examples/ -r example/init_cuniculus.rb
   ```
 
-The `-I examples` option adds the `examples/` directory into the load path, and `-r example/init_cuniculus.rb` requires `init_cuniculus.rb` prior to starting the consumer. The latter is where configurations such as described in the section section should be.
+The `-I examples` option adds the `examples/` directory into the load path, and `-r example/init_cuniculus.rb` requires `init_cuniculus.rb` prior to starting the consumer. The latter is where configurations such as that described in the next section should be.
 
 ## Configuration
 
@@ -151,6 +151,20 @@ If it fails again, it gets moved to `cun_default_2`, where it stays for a longer
 This goes on until there are no more retry attempts, in which case the job gets moved into the `cun_dead` queue. It can be then only be moved back into the `cun_default` queue manually; otherwise it is discarded after some time, defined as the {Cuniculus::Config.dead_queue_ttl}, in milliseconds (by default, 180 days).
 
 Note that if a job cannot even be parsed, it is moved straight to the dead queue, as there's no point in retrying.
+
+## Health check plugin
+
+Cuniculus ships with a health check plugin. When enabled, a Rack server is started (therefore the [Rack](https://github.com/rack/rack) gem is required, as well as the used handler), which responds with `200 OK` upon receiving a request in the configured port and path.
+
+Enable it with `Cuniculus.plugin(:health_check)`, which binds the server to `0.0.0.0:3000`, listening on the `/healthcheck` path. To configure the server, pass additional options:
+
+```ruby
+Cuniculus.plugin(:health_check, { "bind_to" => "127.0.0.1", "port" => 3003, "path" => "ping" })
+```
+
+Check {Cuniculus::Plugins::HealthCheck} for further details.
+
+_Note that the default handler "webrick" is not bundled by default with Ruby 3 and needs to be installed separately, if it is to be used._
 
 ## How it works
 

@@ -2,11 +2,12 @@
 
 require "socket"
 require "thread"
+require "rack"
 
 module Cuniculus
   module Plugins
-    # The HealthCheck plugin starts a TCP server together with consumers for health probing.
-    # It currently does not perform any additional checks returns '200 OK' regardless of whether
+    # The HealthCheck plugin starts a Rack server after consumers are initialized, for health probing.
+    # It currently does not perform any additional checks and returns '200 OK' regardless of whether
     # - the node can connect to RabbitMQ;
     # - consumers are stuck.
     #
@@ -17,23 +18,23 @@ module Cuniculus
     # Cuniculus.plugin(:health_check)
     # ```
     #
-    # Options may be passed as well (use `String` keys):
+    # Options may be passed as well:
     # ```ruby
     # opts = {
     #   "bind_to" => "127.0.0.1", # Default: "0.0.0.0"
     #   "port" => 8080            # Default: 3000
+    #   "path" => "alive"         # Default: "healtcheck"
     # }
     # Cuniculus.plugin(:health_check, opts)
     # ```
-    # This starts the server bound to 127.0.0.1 and port 8080.
-    #
-    # Note that the request path is not considered. The server responds with 200 to any path.
+    # This starts the server bound to 127.0.0.1 and port 8080, and responds on path "alive".
+    # The server responds with 404 when requests are made to different paths.
     module HealthCheck
-      HEALTH_CHECK_RESPONSE = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 2\r\nConnection: close\r\n\r\nOK"
-
       DEFAULTS = {
         "bind_to" => "0.0.0.0",
+        "path" => "healthcheck",
         "port" => 3000,
+        "quiet" => false,
         "server" => "webrick",
         "block" => nil
       }.freeze
@@ -42,15 +43,19 @@ module Cuniculus
 
       # Configure `health_check` plugin
       #
-      # @param plugins_cfg [Hash] Global plugin config hash, passed by Cuniculus. This should not be used by plugin users.
+      # @param plugins_cfg [Hash] Global plugin config hash, passed by Cuniculus. This should not be modified by plugin users.
       # @param opts [Hash] Plugin specific options.
-      # @option opts [String] "bind_to" IP address to bind to (default: "0.0.0.0")
-      # @option opts [Numeric] "port" Port number to bind to (default: 3000)
+      # @option opts [String] "bind_to" ("0.0.0.0") IP address to bind to.
+      # @option opts [String] "path" ("healthcheck") Request path to respond to. Requests to other paths will get a 404 response.
+      # @option opts [Numeric] "port" (3000) Port number to bind to.
+      # @option opts [Boolean] "quiet" (false) Disable server logging to STDOUT and STDERR.
+      # @option opts [String] "server" ("webrick") Rack server handler to use .
       def self.configure(plugins_cfg, opts = {}, &block)
+        opts = opts.transform_keys(&:to_s)
         invalid_opts = opts.keys - DEFAULTS.keys
         raise Cuniculus::Error, "Invalid option keys for :health_check plugin: #{invalid_opts}" unless invalid_opts.empty?
 
-        plugins_cfg[OPTS_KEY] = h = opts.slice("bind_to", "port", "server")
+        plugins_cfg[OPTS_KEY] = h = opts.slice("bind_to", "path", "port", "quiet", "server")
         h["block"] = block if block
         DEFAULTS.each do |k, v|
           h[k] = v if v && !h.key?(k)
@@ -58,45 +63,43 @@ module Cuniculus
       end
 
       module SupervisorMethods
+        def initialize(config)
+          super(config)
+          hc_plugin_opts = config.opts[OPTS_KEY]
+          @hc_server = Rack::Handler.get(hc_plugin_opts["server"])
+          @hc_rack_app = build_rack_app(hc_plugin_opts)
+        end
+
         def start
-          hc_rd, @hc_wr = IO.pipe
-          start_health_check_server(hc_rd)
+          start_health_check_server
           super
         end
 
         def stop
-          @hc_wr << "a"
+          @hc_server.shutdown
           super
         end
 
 
         private
 
-        def start_health_check_server(pipe_reader)
-          opts = config.opts[OPTS_KEY]
-          server = ::TCPServer.new(opts["bind_to"], opts["port"])
-
-          # If port was assigned by OS (when 'port' option was given as 0),
-          # now override input value with it.
-          opts["port"] = server.addr[1]
-          @hc_thread = Thread.new do
-            sock = nil
-            done = false
-            loop do
-              begin
-                break if done
-                sock = server.accept_nonblock
-              rescue IO::WaitReadable, Errno::EINTR
-                io = IO.select([server, pipe_reader])
-                done = true if io.first.include?(pipe_reader)
-                retry
-              end
-
-              sock.print HEALTH_CHECK_RESPONSE
-              sock.shutdown
+        def build_rack_app(opts)
+          app = ::Object.new
+          app.define_singleton_method(:call) do |env|
+            if Rack::Request.new(env).path == "/#{opts['path']}"
+              [200, {}, ["OK"]]
+            else
+              [404, {}, ["Not Found"]]
             end
+          end
+          app
+        end
 
-            sock&.close if sock && !sock.closed?
+        def start_health_check_server
+          opts = config.opts[OPTS_KEY]
+          Thread.new do
+            access_log = opts["quiet"] ? [] : nil
+            @hc_server.run(@hc_rack_app, AccessLog: access_log, Port: opts["port"], Host: opts["bind_to"])
           end
         end
       end

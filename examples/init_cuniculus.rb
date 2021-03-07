@@ -22,4 +22,4 @@ Cuniculus.error_handler do |e|
   puts "Oh nein! #{e}"
 end
 
-Cuniculus.plugin(:health_check, { "bind_to" => "0.0.0.0", "port" => 3000 })
+Cuniculus.plugin(:health_check, { "bind_to" => "0.0.0.0", "port" => 3003, "path" => "ping" })
