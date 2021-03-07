@@ -35,7 +35,6 @@ RSpec.describe Cuniculus::Supervisor do
     end
 
     it "creates channels with configured prefetch counts" do
-      channels = subject.map(&:channel)
       q1 = subject.find { |c| c.queue_config.name == "q1" }
       q2 = subject.find { |c| c.queue_config.name == "q2" }
       expect(q1.channel.prefetch_count).to eq(66)
