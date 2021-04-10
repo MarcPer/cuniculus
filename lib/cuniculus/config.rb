@@ -7,14 +7,28 @@ require "cuniculus/queue_config"
 module Cuniculus
   class Config
     ENFORCED_CONN_OPTS = {
-      threaded: false # No need for a reader thread, since this connection is only used for publishing
+      threaded: false, # No need for a reader thread, since this connection is only used for declaring exchanges and queues.
+      automatically_recover: false,
+      log_level: Logger::ERROR
     }.freeze
 
-    attr_accessor :dead_queue_ttl, :exchange_name, :pub_thr_pool_size, :rabbitmq_opts
+    attr_accessor(
+      :dead_queue_ttl,
+      :exchange_name,
+      :pub_pool_size,
+      :pub_reconnect_attempts,
+      :pub_reconnect_delay,
+      :pub_reconnect_delay_max,
+      :pub_shutdown_grace_period,
+      :rabbitmq_opts
+    )
+
     attr_reader :queues, :opts
 
     def initialize
       @opts = {}
+
+      # ---- Default values
       @queues = { "cun_default" => QueueConfig.new({ "name" => "cun_default" }) }
       @rabbitmq_opts = {
         host: "127.0.0.1",
@@ -23,9 +37,14 @@ module Cuniculus
         pass: "guest",
         vhost: "/"
       }
-      @exchange_name = "cuniculus"
-      @pub_thr_pool_size = 5
+      @exchange_name = Cuniculus::CUNICULUS_EXCHANGE
       @dead_queue_ttl = 1000 * 60 * 60 * 24 * 180 # 180 days
+      @pub_reconnect_attempts = :infinite
+      @pub_reconnect_delay = 1.5
+      @pub_reconnect_delay_max = 10
+      @pub_shutdown_grace_period = 50
+      @pub_pool_size = 5
+      ## ---- End of default values
     end
 
     # Configure an additional queue
@@ -62,6 +81,9 @@ module Cuniculus
       declare_exchanges!(ch)
       declare_dead_queue!(ch)
       @queues.each_value { |q| q.declare!(ch) }
+      conn.close unless conn.closed?
+    rescue Bunny::TCPConnectionFailed => ex
+      raise Cuniculus.convert_exception_class(ex, Cuniculus::RMQConnectionError)
     end
 
     # Specify if the default queue `cun_default` should be created.
@@ -87,8 +109,7 @@ module Cuniculus
         arguments: {
           "x-message-ttl" => dead_queue_ttl
         }
-      ).
-        bind(Cuniculus::CUNICULUS_DLX_EXCHANGE)
+      ).bind(Cuniculus::CUNICULUS_DLX_EXCHANGE)
     end
   end
 end

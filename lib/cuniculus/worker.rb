@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "cuniculus/core"
-require "cuniculus/rmq_pool"
 
 module Cuniculus
   module Worker
@@ -69,9 +68,7 @@ module Cuniculus
       def publish(item)
         routing_key = cun_opts["queue"]
         payload = normalize_item(item)
-        Cuniculus::RMQPool.with_exchange do |x|
-          x.publish(payload, { routing_key: routing_key, persistent: true })
-        end
+        Cuniculus.enqueue [Cuniculus::CUNICULUS_EXCHANGE, payload, routing_key]
       end
 
       def normalize_item(item)

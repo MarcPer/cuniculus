@@ -25,6 +25,10 @@ module Cuniculus
     def cause
       wrapped_exception || super
     end
+
+    def message
+      wrapped_exception&.message || to_s
+    end
   end
 
   # Dev note:

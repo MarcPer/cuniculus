@@ -15,8 +15,15 @@ rabbitmq_conn = {
 
 Cuniculus.configure do |cfg|
   cfg.rabbitmq_opts = rabbitmq_conn
-  cfg.add_queue({ "name" => "my_queue", "durable" => false })
-  cfg.pub_thr_pool_size = 5
+  cfg.add_queue({ "name" => "my_queue", "durable" => true })
+  cfg.pub_pool_size = 5
 end
 
-MyWorker.perform_async("x", [1, 2, 3])
+print "Producing "
+10.times do |i|
+  Examples::MyWorker.perform_async(i)
+  sleep 2
+  print "."
+end
+
+Cuniculus.shutdown

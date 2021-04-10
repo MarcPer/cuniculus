@@ -34,6 +34,10 @@ module Cuniculus
       e.set_backtrace(exception.backtrace)
       e
     end
+
+    def mark_time
+      Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    end
   end
 
   extend CuniculusMethods

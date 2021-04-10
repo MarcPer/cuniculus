@@ -108,7 +108,7 @@ rabbitmq_conn = {
 
 Cuniculus.configure do |cfg|
   cfg.rabbitmq_opts = rabbitmq_conn
-  cfg.pub_thr_pool_size = 5         # Only affects job producers
+  cfg.pub_pool_size = 5         # Only affects job producers
   cfg.dead_queue_ttl = 1000 * 60 * 60 * 24 * 30 # keep failed jobs for 30 days
   cfg.add_queue({ name: "critical", durable: true, max_retry: 10, prefetch_count: 1})
 end
@@ -138,6 +138,19 @@ end
 ```
 
 The method expects a block that will receive an exception, and run in the scope of the Worker instance.
+
+## Publisher proper shutdown
+
+When `perform_async` is called, the job is first put into a local (in-memory) queue that is published to RabbitMQ by a worker in a worker pool (the size of which is configured with `config.pub_pool_size`).
+
+To ensure Cuniculus tries to finish publishing jobs on shutdown, it's important that `Cuniculus.shutdown` is called. Once this method is called, workers have a grace period to publish enqueued jobs, after which the shutdown is forced. The period is set in seconds in `config.pub_shutdown_grace_period` (defaults to 50).
+
+Example code for the [Puma web server](https://github.com/puma/puma):
+```ruby
+on_worker_shutdown do
+  Cuniculus.shutdown
+end
+```
 
 ## Retry mechanism
 

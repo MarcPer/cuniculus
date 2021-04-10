@@ -10,11 +10,15 @@ require "singleton"
 require "toxiproxy"
 
 require "cuniculus"
-require "cuniculus/rmq_pool"
 require "cuniculus/supervisor"
 require "cuniculus/worker"
 
 
+# The global lock file is used for two reasons:
+# - it works as a lock between steps, so we make sure all jobs were consumed before
+# proceeding with further tests. The worker unlocks it as the last step of a test.
+# - timestamps are written into it for measuring latencies. The worker is able
+# to get from the file the timestamp when the measurement started and compute the difference.
 LOCK_FILENAME = "lock.local"
 $lock_file = File.new(LOCK_FILENAME, "w", 0644)
 
@@ -31,6 +35,7 @@ module CuniculusBenchmarks
 
   class NoOpWorker
     include Cuniculus::Worker
+    cuniculus_options queue: "benchmark"
 
     def perform(iter, start_time = nil)
       if iter == "done"
@@ -38,14 +43,6 @@ module CuniculusBenchmarks
       elsif start_time
         latency = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
         $lock_file.puts(latency)
-      end
-    end
-
-    def self.publish(item)
-      routing_key = "benchmark"
-      payload = normalize_item(item)
-      Cuniculus::RMQPool.with_exchange do |x|
-        x.publish(payload, { routing_key: routing_key, persistent: false })
       end
     end
   end
@@ -70,6 +67,8 @@ module CuniculusBenchmarks
         cfg.rabbitmq_opts = RABBITMQ_CONN
         cfg.default_queue = false
         cfg.add_queue({ "name" => "benchmark", "max_retry" => 0, "durable" => false, "prefetch_count" => options[:prefetch_count] || 10 })
+        cfg.pub_reconnect_delay_max = 1
+        cfg.pub_reconnect_attempts = 1
       end
 
       @config = Cuniculus.config
@@ -86,7 +85,7 @@ module CuniculusBenchmarks
 
     def run
       pipe_reader, pipe_writer = IO.pipe
-      sigs = %w[INT TERM]
+      sigs = %w[INT TERM USR2]
 
       sigs.each do |sig|
         trap sig do
@@ -102,10 +101,7 @@ module CuniculusBenchmarks
       $lock_file.flock(File::LOCK_EX)
 
       # Add a final job that will unlock the file
-      payload = Cuniculus.dump_job({ "class" => NoOpWorker, "args" => ["done", nil] })
-      Cuniculus::RMQPool.with_exchange do |x|
-        x.publish(payload, { routing_key: "benchmark", persistent: false })
-      end
+      NoOpWorker.perform_async("done", nil)
 
       puts "Starting consumers"
       launch(pipe_reader)
@@ -126,7 +122,8 @@ module CuniculusBenchmarks
         end
 
 
-        lat_sample_size = options[:lat_sample_size] || 100
+        lat_sample_size = options[:lat_sample_size].to_i
+        lat_sample_size = 100 if lat_sample_size <= 0
         if queue.message_count == 0
           puts "Measuring latency over #{lat_sample_size} samples..."
           $lock_file.truncate(0)
@@ -136,13 +133,13 @@ module CuniculusBenchmarks
             NoOpWorker.perform_async("done", nil)
             File.open(LOCK_FILENAME, "r") { |f| f.flock(File::LOCK_EX) }
           end
+
           File.open(LOCK_FILENAME, "r", chomp: true) do |f|
             f.flock(File::LOCK_EX)
             lats = f.readlines.map(&:to_f).sum
             puts "Average latency: #{lats/lat_sample_size} seconds"
           end
           puts "done"
-
           @supervisor.stop
 
           sleep 2
@@ -178,6 +175,8 @@ module CuniculusBenchmarks
       case sig
       when "INT", "TERM"
         raise Interrupt
+      when "USR2"
+        Cuniculus.dispatcher.describe(Logger::INFO)
       end
     end
 
@@ -186,10 +185,7 @@ module CuniculusBenchmarks
     def populate_queue
       niter = options[:num_jobs] || 100_000
       niter.times do |iter|
-        payload = Cuniculus.dump_job({ "class" => NoOpWorker, "args" => [iter, nil] })
-        Cuniculus::RMQPool.with_exchange do |x|
-          x.publish(payload, { routing_key: "benchmark", persistent: false })
-        end
+        NoOpWorker.perform_async(iter, nil)
       end
     end
 

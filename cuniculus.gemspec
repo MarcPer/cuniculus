@@ -22,7 +22,6 @@ CUNICULUS_GEMSPEC = Gem::Specification.new do |gem|
   gem.executables << "cuniculus"
 
   gem.add_dependency "bunny", ">= 2.15.0"
-  gem.add_dependency "connection_pool", ">= 2.2.2"
 
   gem.add_development_dependency "pry"
   gem.add_development_dependency "rack"
