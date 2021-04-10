@@ -7,7 +7,7 @@ raise "Cuniculus #{Cuniculus.version} does not support Ruby versions below 2.6."
 require "cuniculus/logger"
 require "cuniculus/config"
 require "cuniculus/plugins"
-require "cuniculus/rmq_pool"
+require "cuniculus/dispatcher"
 require "cuniculus/supervisor"
 
 # Base definition of the Cuniculus Module
@@ -28,7 +28,20 @@ module Cuniculus
     yield cfg
     cfg.declare!
     @config = cfg
-    Cuniculus::RMQPool.configure(cfg)
+    @dispatcher = Cuniculus::Dispatcher.new(cfg)
+  end
+
+  def self.enqueue(job)
+    dispatcher.job_queue << job
+    dispatcher.start!
+  end
+
+  def self.shutdown
+    dispatcher.shutdown
+  end
+
+  def self.dispatcher
+    @dispatcher ||= Cuniculus::Dispatcher.new(config)
   end
 
   # Current config of Cuniculus
@@ -64,6 +77,9 @@ module Cuniculus
   def self.error_handler(&block)
     Cuniculus::Consumer.define_method(:handle_error, &block)
     Cuniculus::Consumer.instance_eval { private :handle_error }
+
+    Cuniculus::Dispatcher.define_method(:handle_error, &block)
+    Cuniculus::Dispatcher.instance_eval { private :handle_error }
   end
 
   # Load a plugin. If plugin is a Module, it is loaded directly.

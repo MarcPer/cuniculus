@@ -2,14 +2,14 @@
 
 require "cuniculus/worker"
 
-class MyWorker
-  include Cuniculus::Worker
-  cuniculus_options queue: "my_queue"
+module Examples
+  class MyWorker
+    include Cuniculus::Worker
+    cuniculus_options queue: "my_queue"
 
-  def perform(arg1, arg2)
-    puts "Processing:"
-    puts "arg1: #{arg1.inspect}"
-    puts "arg2: #{arg2.inspect}"
-    sleep 1
+    def perform(arg1)
+      puts "Processing: #{arg1.inspect}"
+      sleep 1
+    end
   end
 end

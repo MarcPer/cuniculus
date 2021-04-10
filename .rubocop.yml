@@ -63,5 +63,8 @@ Style/StringLiterals:
 Style/NumericLiterals:
   Enabled: false
 
+Style/NumericPredicate:
+  Enabled: False
+
 Style/Documentation:
   Enabled: false

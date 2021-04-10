@@ -108,7 +108,7 @@ RSpec.describe Cuniculus::Consumer do
 
         it "logs exception to Cuniculus logger" do
           subject
-          expect(@logio.string).to include("ArgumentError: damaged worker")
+          expect(@logio.string).to include("Cuniculus::Error: damaged worker")
         end
       end
 
@@ -119,7 +119,7 @@ RSpec.describe Cuniculus::Consumer do
             alias_method :orig_handle_error, :handle_error
           end
           Cuniculus.error_handler do |e|
-            @other_logger.puts(e.message)
+            @other_logger.print(e.message)
           end
         end
 
@@ -138,7 +138,7 @@ RSpec.describe Cuniculus::Consumer do
         it "runs block defined by error_handler" do
           subject
           logger = consumer.instance_variable_get(:@other_logger)
-          expect(logger.string).to include("ArgumentError: damaged worker")
+          expect(logger.string).to eq("damaged worker")
         end
       end
     end
