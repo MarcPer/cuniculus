@@ -1,4 +1,5 @@
-# Cuniculus
+![cuniculus_logo](https://user-images.githubusercontent.com/4718658/115109242-de53f900-9f74-11eb-8a46-b93d6f484370.png)
+
 
 Ruby job queue backed by RabbitMQ. The word _cuniculus_ comes from the scientific name of the European rabbit (Oryctolagus cuniculus).
 
