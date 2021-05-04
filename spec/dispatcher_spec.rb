@@ -1,6 +1,7 @@
 
 # frozen_string_literal: true
 
+require "logger"
 require "stringio"
 require_relative "spec_helper"
 require_relative "rmq_control"
@@ -9,11 +10,6 @@ require "cuniculus/logger"
 require "cuniculus/dispatcher"
 
 RSpec.describe Cuniculus::Dispatcher do
-  let(:channel) { instance_double("Bunny::Channel", ack: nil, nack: nil) }
-  let(:queue) { instance_double("Bunny::Queue", subscribe: nil) }
-  let(:queue_config) { instance_double("Cuniculus::QueueConfig", declare!: nil) }
-  let(:exchange) { instance_double("Bunny::Exchange", publish: nil) }
-
   before(:all) do
     rmq_host = ENV["RMQ_HOST"] || "rabbitmq"
     @rmq_opts = { host: rmq_host, port: 5672, user: "guest", pass: "guest", vhost: "/" }

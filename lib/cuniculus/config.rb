@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "logger"
 require "cuniculus/core"
 require "cuniculus/exceptions"
 require "cuniculus/queue_config"
@@ -9,7 +10,7 @@ module Cuniculus
     ENFORCED_CONN_OPTS = {
       threaded: false, # No need for a reader thread, since this connection is only used for declaring exchanges and queues.
       automatically_recover: false,
-      log_level: Logger::ERROR
+      log_level: ::Logger::ERROR
     }.freeze
 
     attr_accessor(
