@@ -3,6 +3,8 @@
 require "rspec"
 require "pry"
 
+Thread.abort_on_exception = true
+
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 RSpec.configure do |config|
   config.expect_with :rspec do |expectations|

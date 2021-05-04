@@ -27,6 +27,16 @@ RSpec.describe Cuniculus::PubWorker do
 
   subject { described_class.new(config, job_queue, dispatcher_chan) }
 
+  # Make sure background thread is terminates before continuing with other tests
+  after do
+    job_queue << :shutdown
+    t0 = Cuniculus.mark_time
+    while subject.alive? && (Cuniculus.mark_time - t0 < 5)
+      job_queue << :shutdown
+      sleep 0.2
+    end
+  end
+
   let(:connection) do
     ::Bunny.new(config.rabbitmq_opts)
   end
