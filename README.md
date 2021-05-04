@@ -114,7 +114,7 @@ Cuniculus.configure do |cfg|
 end
 ```
 
-To configure the queue used by a worker, used `cuniculus_options`:
+To configure the queue used by a worker, use `cuniculus_options`:
 
 ```ruby
 class MyWorker
