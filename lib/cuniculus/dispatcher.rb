@@ -15,7 +15,7 @@ module Cuniculus
     ENFORCED_CONN_OPTS = {
       threaded: false, # No need for a reader thread, since this connection is only used for publishing
       automatically_recover: false,
-      logger: Logger.new(IO::NULL)
+      logger: ::Logger.new(IO::NULL)
     }.freeze
     RECOVERABLE_ERRORS = [AMQ::Protocol::Error, ::Bunny::Exception, Errno::ECONNRESET].freeze
 
