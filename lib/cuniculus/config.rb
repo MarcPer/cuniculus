@@ -13,18 +13,19 @@ module Cuniculus
       log_level: ::Logger::ERROR
     }.freeze
 
-    attr_accessor(
+    attr_reader(
       :dead_queue_ttl,
       :exchange_name,
+      :opts,
       :pub_pool_size,
       :pub_reconnect_attempts,
       :pub_reconnect_delay,
       :pub_reconnect_delay_max,
       :pub_shutdown_grace_period,
-      :rabbitmq_opts
+      :queues
     )
 
-    attr_reader :queues, :opts
+    attr_accessor :rabbitmq_opts
 
     def initialize
       @opts = {}
@@ -47,6 +48,41 @@ module Cuniculus
       @pub_pool_size = 5
       ## ---- End of default values
     end
+
+      def dead_queue_ttl=(ttl)
+        raise Cuniculus::ConfigError, "dead_queue_ttl should be a positive integer, given #{ttl.inspect}" if ttl.to_i <= 0
+        @dead_queue_ttl = ttl
+      end
+
+      def exchange_name=(xname)
+        raise Cuniculus::ConfigError, "exchange_name should not be blank" if xname.to_s.empty?
+        @exchange_name = xname
+      end
+
+      def pub_pool_size=(pool_size)
+        raise Cuniculus::ConfigError, "pub_pool_size should be a positive integer, given #{pool_size.inspect}" if pool_size.to_i <= 0
+        @pub_pool_size = pool_size
+      end
+
+      def pub_reconnect_attempts=(attempts)
+        raise Cuniculus::ConfigError, "pub_reconnect_attempts should be either :infinite or a non-negative integer, was given #{attempts.inspect}" if attempts != :infinite && attempts.to_i < 0
+        @pub_reconnect_attempts = attempts
+      end
+
+      def pub_reconnect_delay=(delay)
+        raise Cuniculus::ConfigError, "pub_reconnect_delay should be a non-negative integer, was given #{delay.inspect}" if delay.to_i < 0
+        @pub_reconnect_delay = delay
+      end
+
+      def pub_reconnect_delay_max=(delay)
+        raise Cuniculus::ConfigError, "pub_reconnect_delay_max should be a non-negative integer, was given #{delay.inspect}" if delay.to_i < 0
+        @pub_reconnect_delay_max = delay
+      end
+
+      def pub_shutdown_grace_period=(period)
+        raise Cuniculus::ConfigError, "pub_shutdown_grace_period should be a non-negative integer, was given #{period.inspect}" if period.to_i < 0
+        @pub_shutdown_grace_period = period
+      end
 
     # Configure an additional queue
     #
