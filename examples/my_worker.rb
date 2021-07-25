@@ -4,7 +4,7 @@ require "cuniculus/worker"
 
 module Examples
   class MyWorker
-    include Cuniculus::Worker
+    extend Cuniculus::Worker
     cuniculus_options queue: "my_queue"
 
     def perform(arg1)

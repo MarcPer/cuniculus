@@ -6,7 +6,7 @@ require "cuniculus/worker"
 RSpec.describe Cuniculus::Worker do
   let(:worker) do
     Class.new do
-      include Cuniculus::Worker
+      extend Cuniculus::Worker
     end
   end
   describe "cuniculus_options" do
@@ -15,7 +15,7 @@ RSpec.describe Cuniculus::Worker do
     context "when cuniculus_options is not called" do
       it "uses default values" do
         expect(worker.cun_opts).to include(
-          "queue" => "cun_default"
+          queue: "cun_default"
         )
       end
     end
@@ -27,7 +27,7 @@ RSpec.describe Cuniculus::Worker do
 
     context "when invalid keys are passed" do
       let(:opts) do
-        { "invalid_key" => 123, "another_invalid_key" => 3, "queue" => "q" }
+        { invalid_key: 123, "another_invalid_key" => 3, queue: "q" }
       end
       it { expect { subject }.to raise_exception(Cuniculus::WorkerOptionsError) }
     end
@@ -37,19 +37,19 @@ RSpec.describe Cuniculus::Worker do
         Class.new(worker)
       end
       before do
-        worker.cuniculus_options({ "queue" => "q1" })
+        worker.cuniculus_options({ queue: "q1" })
       end
 
       it "inherits the options from the parent worker" do
-        expect(child_worker.cun_opts["queue"]).to eq("q1")
+        expect(child_worker.cun_opts[:queue]).to eq("q1")
       end
 
       context "when child worker overrides the options" do
-        before { child_worker.cuniculus_options({ "queue" => "q2" }) }
-        it { expect(child_worker.cun_opts["queue"]).to eq("q2") }
+        before { child_worker.cuniculus_options({ queue: "q2" }) }
+        it { expect(child_worker.cun_opts[:queue]).to eq("q2") }
 
         it "does not change the parent worker options" do
-          expect(worker.cun_opts["queue"]).to eq("q1")
+          expect(worker.cun_opts[:queue]).to eq("q1")
         end
       end
     end

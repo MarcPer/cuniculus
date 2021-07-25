@@ -34,7 +34,7 @@ module CuniculusBenchmarks
   }.freeze
 
   class NoOpWorker
-    include Cuniculus::Worker
+    extend Cuniculus::Worker
     cuniculus_options queue: "benchmark"
 
     def perform(iter, start_time = nil)
