@@ -5,7 +5,7 @@ CUNICULUS_GEMSPEC = Gem::Specification.new do |gem|
   gem.platform = Gem::Platform::RUBY
   gem.extra_rdoc_files = ["README.md", "CHANGELOG.md"]
   gem.rdoc_options += ["--quiet", "--line-numbers", "--inline-source", "--title",
-                       "Cuniculus: Background job processing with RabbitMQ", "--main", "README.rdoc"]
+                       "Cuniculus: Background job processing with RabbitMQ", "--main", "README.md"]
   gem.summary = "Job queue processing backed by RabbitMQ"
   gem.description = gem.summary
   gem.author = "Marcelo Pereira"
