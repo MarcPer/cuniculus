@@ -6,11 +6,11 @@ module Cuniculus
 
   # The minor version of Cuniculus. Bumped for every non-patch level
   # release.
-  MINOR = 1
+  MINOR = 2
 
   # The tiny version of Cuniculus.  Usually 0, only bumped for bugfix
   # releases that fix regressions from previous versions.
-  TINY  = 0
+  TINY  = 1
 
   # The version of Cuniculus you are using, as a string (e.g. "2.11.0")
   VERSION = [MAJOR, MINOR, TINY].join(".").freeze
