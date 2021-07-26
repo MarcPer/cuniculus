@@ -123,7 +123,7 @@ There is also a more complete example in the Cuniculus repository itself. To run
   bin/cuniculus -I examples/ -r example/init_cuniculus.rb
   ```
 
-The `-I examples` option adds the `examples/` directory into the load path, and `-r example/init_cuniculus.rb` requires `init_cuniculus.rb` prior to starting the consumer. The latter is where configurations such as that described in the next section should be.
+The `-I examples` option adds the `examples/` directory into the load path, and `-r example/init_cuniculus.rb` requires `init_cuniculus.rb` prior to starting the consumer. The latter is where configurations such as that described in the [configuration section](#configuration) section should be.
 
 ## Error handling
 
@@ -132,6 +132,7 @@ By default, exceptions raised when consuming a job are logged to STDOUT. This ca
 ```ruby
 Cuniculus.error_handler do |e|
   puts "Oh nein! #{e}"
+  LoggingService.send(e)
 end
 ```
 
@@ -154,13 +155,13 @@ end
 
 Retries are enabled by default (with 8 retries) with an exponential backoff, meaning the time between retries increases the more failures happen. The formula for calculating the times between retries can be found in {Cuniculus::QueueConfig}, namely in the `x-message-ttl` line. As an example, the time between the 7th and 8th retries is roughly 29 days.
 
-Given a declared queue in the configuration, Cuniculus starts on RabbitMQ the corresponding base queue, in addition to its retry queues. As an example, let's consider the default queue `cun_default`: Cuniculus declares a `cun_default` queue, together with some `cun_default_{n}` queues used for job retries.
+Given a queue in the configuration, Cuniculus declares on RabbitMQ the corresponding base queue, in addition to its retry queues. As an example, let's consider the default queue `cun_default`: Cuniculus declares a `cun_default` queue, together with some `cun_default_{n}` queues used for job retries.
 
 When a job raises an exception, it is placed into the `cun_default_1` queue for the first retry. It stays there for some pre-defined time, and then gets moved back into the `cun_default` queue for execution.
 
 If it fails again, it gets moved to `cun_default_2`, where it stays for a longer period until it's moved back directly into the `cun_default` queue again.
 
-This goes on until there are no more retry attempts, in which case the job gets moved into the `cun_dead` queue. It can be then only be moved back into the `cun_default` queue manually; otherwise it is discarded after some time, defined as the {Cuniculus::Config.dead_queue_ttl}, in milliseconds (by default, 180 days).
+This goes on until there are no more retry attempts, in which case the job gets moved into the `cun_dead` queue. It can be then only be moved back into the `cun_default` queue manually (from RabbitMQ itself, not with Cuniculus); otherwise it is discarded after some time, defined as the {Cuniculus::Config.dead_queue_ttl}, in milliseconds (by default, 180 days).
 
 Note that if a job cannot even be parsed, it is moved straight to the dead queue, as there's no point in retrying.
 
