@@ -16,6 +16,7 @@ AllCops:
     - bin/run_benchmarks
     - cuniculus.gemspec
   DisabledByDefault: true
+  NewCops: enable
 
 Layout/TrailingWhitespace:
   Enabled: true

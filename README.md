@@ -98,7 +98,7 @@ To configure the queue used by a worker, use `cuniculus_options`:
 
 ```ruby
 class MyWorker
-  include Cuniculus::Worker
+  extend Cuniculus::Worker
 
   cuniculus_options queue: "critical"
   def perform

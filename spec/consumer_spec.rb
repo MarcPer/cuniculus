@@ -22,7 +22,7 @@ RSpec.describe Cuniculus::Consumer do
       class << self
         attr_accessor :stored_arg
       end
-      include Cuniculus::Worker
+      extend Cuniculus::Worker
       def perform(arg)
         self.class.stored_arg = arg
       end
@@ -66,7 +66,7 @@ RSpec.describe Cuniculus::Consumer do
     context "when an exception is raised by the worker" do
       let(:worker) do
         Class.new do
-          include Cuniculus::Worker
+          extend Cuniculus::Worker
           def perform(arg1, arg2)
             raise ArgumentError, "damaged worker"
           end

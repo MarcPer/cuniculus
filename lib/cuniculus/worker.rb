@@ -29,7 +29,7 @@ module Cuniculus
     #
     # @example Change the queue name of a worker
     #   class MyWorker
-    #     include Cuniculus::Worker
+    #     extend Cuniculus::Worker
     #
     #     cuniculus_options queue: "critical"
     #
