@@ -10,9 +10,9 @@
 # See https://docs.rubocop.org/rubocop/configuration
 
 AllCops:
-  TargetRubyVersion: 2.6
+  TargetRubyVersion: 2.7
   Exclude:
-    - gems.rb
+    - Gemfile
     - bin/run_benchmarks
     - cuniculus.gemspec
   DisabledByDefault: true
@@ -27,12 +27,14 @@ Metrics:
 Style:
   Enabled: true
 
-Style/ArgumentsForwarding:
-  Enabled: false
-
 Style/Alias:
   Enabled: false
 
+Style/ArgumentsForwarding:
+  Enabled: false
+
+Style/FetchEnvVar:
+  Enabled: false
 
 Style/CollectionCompact:
   Enabled: false
