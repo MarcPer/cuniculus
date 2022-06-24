@@ -7,12 +7,11 @@ module Cuniculus
   # its job queue and publishing the payloads to RabbitMQ. They are not instantiated
   # directly, but are rather created and managed by a {Cuniculus::Dispatcher}.
   class PubWorker
-    def initialize(config, job_queue, dispatcher_chan)
+    def initialize(config, job_queue)
       @config = config
       @job_queue = job_queue
-      @dispatcher_chan = dispatcher_chan
       @mutex = Mutex.new
-      @thread = nil
+      @alive = false
     end
 
     # Declares exchanges, and starts a background thread that consumes and publishes messages.
@@ -24,21 +23,18 @@ module Cuniculus
     #
     # @param conn [::Bunny::Session] Connection to RabbitMQ. Expected to be open at this stage.
     def start!(conn)
-      return @dispatcher_chan << Cuniculus.mark_time unless conn.open?
-
-      @channel = sync { conn.create_channel }
-      @x = sync { @channel.direct(Cuniculus::CUNICULUS_EXCHANGE, { durable: true }) }
-      @dlx = sync { @channel.fanout(Cuniculus::CUNICULUS_DLX_EXCHANGE, { durable: true }) }
-      @thread = Thread.new { run }
-    rescue Bunny::Exception
-      @dispatcher_chan << Cuniculus.mark_time
+      @channel = conn.create_channel
+      @x = @channel.direct(Cuniculus::CUNICULUS_EXCHANGE, { durable: true })
+      @dlx = @channel.fanout(Cuniculus::CUNICULUS_DLX_EXCHANGE, { durable: true })
+      @alive = true
+      run
     end
 
     # Whether the background thread is running.
     #
     # @return [Boolean]
     def alive?
-      @thread&.alive? || false
+      @alive
     end
 
     private
@@ -59,21 +55,20 @@ module Cuniculus
         else
           xname, payload, routing_key = msg
           exchange = if xname == CUNICULUS_DLX_EXCHANGE
-                       sync { @dlx }
+                        @dlx
                      else
-                       sync { @x }
+                        @x
                      end
           begin
-            publish_time = Cuniculus.mark_time
             exchange.publish(payload, { routing_key: routing_key, persistent: true })
           rescue *::Cuniculus::Dispatcher::RECOVERABLE_ERRORS
             @job_queue << [xname, payload, routing_key]
-            @dispatcher_chan << publish_time
             break
           end
         end
       end
-      sync { @channel.close unless @channel.closed? }
+      @alive = false
+      @channel.close unless @channel.closed?
     end
 
     def sync(&block)

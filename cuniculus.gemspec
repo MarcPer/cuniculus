@@ -22,6 +22,7 @@ CUNICULUS_GEMSPEC = Gem::Specification.new do |gem|
   gem.executables << "cuniculus"
 
   gem.add_dependency "bunny", ">= 2.15.0"
+  gem.add_dependency "polyphony", ">= 0.89"
 
   gem.add_development_dependency "pry"
   gem.add_development_dependency "rack"

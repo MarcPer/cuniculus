@@ -27,11 +27,11 @@ module Cuniculus
     def initialize(config)
       @config = config
       @conn = nil
+      @state = :disconnected
       @job_queue = Queue.new
-      @dispatcher_chan = Queue.new
       @shutdown = false
       @workers = config.pub_pool_size.times.map do |i|
-        Cuniculus::PubWorker.new(config, @job_queue, @dispatcher_chan)
+        Cuniculus::PubWorker.new(config, @job_queue)
       end
       @reconnect_attempts = config.pub_reconnect_attempts
       @reconnect_delay = config.pub_reconnect_delay
@@ -63,20 +63,37 @@ module Cuniculus
     #
     # Note that the first time the dispatcher is started, it sends a message to its own background thread with a timestamp to trigger the first connection.
     def start!
-      return if @shutdown || @thread&.alive?
-      @thread = Thread.new do
-        last_connect_time = 0
-        loop do
-          disconnect_time = @dispatcher_chan.pop
-          break if disconnect_time == :shutdown
-          if disconnect_time > last_connect_time
-            recover_from_net_error
-            last_connect_time = Cuniculus.mark_time
+      return if @state == :shutdown || alive?
+      require "polyphony"
+      @conn = ::Bunny.new(@config.rabbitmq_opts.merge(ENFORCED_CONN_OPTS).merge(session_error_handler: @thread))
+      @thread = spin do
+        begin
+          loop do
+            reconnect if @state == :disconnected
+            sleep 1
           end
+        rescue *RECOVERABLE_ERRORS => ex
+          @state = :disconnected unless @state == :shutdown
+          handle_error(Cuniculus.convert_exception_class(ex, Cuniculus::RMQConnectionError))
+          retry
         end
       end
-      @conn = ::Bunny.new(@config.rabbitmq_opts.merge(ENFORCED_CONN_OPTS).merge(session_error_handler: @thread))
-      @dispatcher_chan << Cuniculus.mark_time
+    end
+
+    def reconnect
+      return if @state == :connecting
+      @state = :connecting
+
+      spin do
+        @conn.start
+        Cuniculus.logger.info("Connection established")
+
+        @workers.each { |w| spin { w.start!(@conn) } }
+        Cuniculus.logger.info("Workers running")
+
+
+        @state = :connected
+      end
     end
 
     # Whether its background thread is running.
@@ -126,7 +143,7 @@ module Cuniculus
     # @return [void]
     def shutdown
       Cuniculus.logger.info("Cuniculus: Shutting down dispatcher")
-      @shutdown = true
+      @state = :shutdown
       alive_size = @workers.size
       shutdown_t0 = Cuniculus.mark_time
 
@@ -137,7 +154,6 @@ module Cuniculus
         alive_size.times { @job_queue << :shutdown }
       end
 
-      @dispatcher_chan << :shutdown
       alive_size = @workers.select(&:alive?).size
       return unless alive_size > 0
 

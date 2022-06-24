@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'pry'
 require "cuniculus"
 require_relative "my_worker"
 
@@ -22,7 +23,7 @@ end
 print "Producing "
 10.times do |i|
   Examples::MyWorker.perform_async(i)
-  sleep 2
+  sleep 0.2
   print "."
 end
 
