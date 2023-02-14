@@ -2,7 +2,7 @@ version: '3.5'
 
 services:
   rabbitmq:
-    image: 'rabbitmq:3.8.9-management'
+    image: 'rabbitmq:3.11.9-management'
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest

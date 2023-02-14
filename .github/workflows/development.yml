@@ -13,9 +13,9 @@ jobs:
           - ubuntu
         
         ruby:
+          - 3.2
           - 3.1
           - 3.0
-          - 2.7
         
         experimental: [false]
         env: [""]
@@ -44,7 +44,7 @@ jobs:
 
     services:
       rabbitmq:
-        image: 'rabbitmq:3.8.9-management'
+        image: 'rabbitmq:3.11.9-management'
         ports:
           - '5672:5672'
           - '15672:15672'

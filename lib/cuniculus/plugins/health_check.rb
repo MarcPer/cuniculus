@@ -2,7 +2,8 @@
 
 require "socket"
 require "thread"
-require "rack"
+require "rackup/handler"
+require "rack/request"
 
 module Cuniculus
   module Plugins
@@ -66,7 +67,7 @@ module Cuniculus
         def initialize(config)
           super(config)
           hc_plugin_opts = config.opts[OPTS_KEY]
-          @hc_server = Rack::Handler.get(hc_plugin_opts["server"])
+          @hc_server = Rackup::Handler.get(hc_plugin_opts["server"])
           @hc_rack_app = build_rack_app(hc_plugin_opts)
         end
 

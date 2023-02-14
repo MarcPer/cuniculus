@@ -2,7 +2,7 @@ PATH
   remote: .
   specs:
     cuniculus (0.2.1)
-      bunny (>= 2.15.0)
+      bunny (>= 2.19.0)
 
 GEM
   remote: https://rubygems.org/
@@ -21,7 +21,10 @@ GEM
     pry (0.14.1)
       coderay (~> 1.1)
       method_source (~> 1.0)
-    rack (2.2.3.1)
+    rack (3.0.4.1)
+    rackup (2.0.0)
+      rack (>= 3)
+      webrick
     rainbow (3.1.1)
     rbtree (0.4.5)
     redcarpet (3.5.1)
@@ -69,7 +72,7 @@ PLATFORMS
 DEPENDENCIES
   cuniculus!
   pry
-  rack
+  rackup
   redcarpet
   rspec
   rubocop

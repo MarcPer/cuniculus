@@ -113,7 +113,7 @@ end
 There is also a more complete example in the Cuniculus repository itself. To run it, clone the repository, then
 - start the Ruby and RabbitMQ containers using [Docker Compose](https://docs.docker.com/compose/):
   ```
-  docker-compose up -d
+  docker compose up -d
   ```
 - from within the _cuniculus_ container, produce a job:
   ```
@@ -121,7 +121,7 @@ There is also a more complete example in the Cuniculus repository itself. To run
   ```
 - also from within the container, start the consumer:
   ```
-  bin/cuniculus -I examples/ -r example/init_cuniculus.rb
+  bin/cuniculus -I examples/ -r examples/init_cuniculus.rb
   ```
 
 The `-I examples` option adds the `examples/` directory into the load path, and `-r example/init_cuniculus.rb` requires `init_cuniculus.rb` prior to starting the consumer. The latter is where configurations such as that described in the [configuration section](#configuration) section should be.
