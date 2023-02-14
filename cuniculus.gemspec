@@ -14,17 +14,18 @@ CUNICULUS_GEMSPEC = Gem::Specification.new do |gem|
   gem.metadata = {
     "source_code_uri" => "https://github.com/MarcPer/cuniculus",
     "bug_tracker_uri" => "https://github.com/MarcPer/cuniculus/issues",
-    "changelog_uri" => "https://github.com/MarcPer/cuniculus/CHANGELOG.md"
+    "changelog_uri" => "https://github.com/MarcPer/cuniculus/CHANGELOG.md",
+    "rubygems_mfa_required" => "true"
   }
-  gem.required_ruby_version = ">= 2.6"
+  gem.required_ruby_version = ">= 3.0"
   gem.files = %w[LICENSE CHANGELOG.md README.md bin/cuniculus] + Dir["lib/**/*.rb"]
   gem.bindir = "bin"
   gem.executables << "cuniculus"
 
-  gem.add_dependency "bunny", ">= 2.15.0"
+  gem.add_dependency "bunny", ">= 2.19.0"
 
   gem.add_development_dependency "pry"
-  gem.add_development_dependency "rack"
+  gem.add_development_dependency "rackup"
   gem.add_development_dependency "redcarpet"
   gem.add_development_dependency "rspec"
   gem.add_development_dependency "rubocop"
