@@ -21,7 +21,7 @@ GEM
     pry (0.14.1)
       coderay (~> 1.1)
       method_source (~> 1.0)
-    rack (3.0.4.1)
+    rack (3.0.4.2)
     rackup (2.0.0)
       rack (>= 3)
       webrick
