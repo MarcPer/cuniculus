@@ -37,7 +37,7 @@ module Cuniculus
 
     def create_consumers(conn, queues)
       consumers = []
-      queues.each do |_name, q_cfg|
+      queues.each_value do |q_cfg|
         ch = conn.create_channel(nil, q_cfg.thread_pool_size)
         ch.prefetch(q_cfg.prefetch_count) if q_cfg.prefetch_count
         consumers << Cuniculus::Consumer.new(q_cfg, ch)
