@@ -12,7 +12,7 @@ RSpec.describe Cuniculus::QueueConfig do
     rmq_host = ENV["RMQ_HOST"] || "rabbitmq"
     rmq_opts = { host: rmq_host, port: 5672, user: "guest", pass: "guest", vhost: "/" }
     RMQControl.wait_live(10)
-    @conn = ::Bunny.new(rmq_opts)
+    @conn = Bunny.new(rmq_opts)
     @conn.start
   end
 

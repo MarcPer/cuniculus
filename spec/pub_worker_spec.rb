@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require_relative "./timeout_queue"
+require_relative "timeout_queue"
 require "cuniculus"
 require "cuniculus/pub_worker"
 
@@ -38,7 +38,7 @@ RSpec.describe Cuniculus::PubWorker do
   end
 
   let(:connection) do
-    ::Bunny.new(config.rabbitmq_opts)
+    Bunny.new(config.rabbitmq_opts)
   end
 
   describe "#start!" do
@@ -61,7 +61,7 @@ RSpec.describe Cuniculus::PubWorker do
           end
 
           def publish(payload, opts)
-            raise ::Bunny::Exception if payload == :boom
+            raise Bunny::Exception if payload == :boom
             @payloads << payload
             @opts << opts
           end
