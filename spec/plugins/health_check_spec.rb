@@ -47,15 +47,15 @@ RSpec.describe Cuniculus::Plugins::HealthCheck do
   end
 
   describe "start" do
-    context "when a request is sent to the configured port, but different path" do
+    context "when a request is sent to the configured port, but wrong path" do
       it "returns 404 Not Found" do
-        res = Net::HTTP.get_response("localhost", "/healthcheck", port)
+        res = Net::HTTP.get_response("localhost", "/areyouok", port)
         expect(res.code).to eq("404")
       end
     end
 
-    context "when a request is sent to the configured port, but different path" do
-      it "returns 404 Not Found" do
+    context "when a request is sent to the configured port and path" do
+      it "returns 200  OK" do
         res = Net::HTTP.get_response("localhost", "/alive", port)
         expect(res.code).to eq("200")
       end
